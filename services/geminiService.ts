@@ -1,13 +1,25 @@
+
 import { GoogleGenAI, Modality, Part } from "@google/genai";
 import type { AspectRatio, ImageFile, GantiOutfitImages, GantiOutfitBodyOptions, PhotoWithIdolOptions } from '../types';
 
-const API_KEY = process.env.API_KEY;
+// Lazy-initialized singleton for the AI client.
+// This prevents the app from crashing on load if the API key isn't set in the environment.
+let aiInstance: GoogleGenAI | null = null;
 
-if (!API_KEY) {
-    throw new Error("API_KEY environment variable not set");
-}
+const getAiInstance = (): GoogleGenAI => {
+    if (aiInstance) {
+        return aiInstance;
+    }
 
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+        throw new Error("Konfigurasi API Key tidak ditemukan. Pastikan Anda telah mengatur environment variable 'API_KEY' di pengaturan proyek Vercel Anda.");
+    }
+
+    aiInstance = new GoogleGenAI({ apiKey });
+    return aiInstance;
+};
+
 
 interface GenerateImageFromTextOptions {
     prompt: string;
@@ -35,6 +47,7 @@ interface CreatePhotoWithIdolOptions {
 
 export const removeWatermark = async (image: ImageFile): Promise<ImageFile> => {
     try {
+        const ai = getAiInstance();
         const prompt = "Remove any and all watermarks or logos from this image. Inpaint the area where the watermark was to seamlessly blend with the surroundings. Do not alter any other part of the image.";
         const base64ImageData = image.data.split(',')[1];
 
@@ -61,12 +74,13 @@ export const removeWatermark = async (image: ImageFile): Promise<ImageFile> => {
                 };
             }
         }
-        // Jika model tidak mengembalikan gambar, kembalikan gambar asli
         console.warn("Gagal menghapus watermark, mengembalikan gambar asli.");
         return image;
     } catch (error) {
+        if (error instanceof Error && error.message.includes("API_KEY")) {
+            throw error;
+        }
         console.error("Error removing watermark, returning original image:", error);
-        // Jika terjadi error, kembalikan gambar asli agar alur tidak terhenti
         return image;
     }
 };
@@ -74,6 +88,7 @@ export const removeWatermark = async (image: ImageFile): Promise<ImageFile> => {
 
 export const generateImageFromText = async ({ prompt, aspectRatio }: GenerateImageFromTextOptions): Promise<ImageFile> => {
     try {
+        const ai = getAiInstance();
         const response = await ai.models.generateImages({
             model: 'imagen-4.0-generate-001',
             prompt: prompt,
@@ -96,12 +111,13 @@ export const generateImageFromText = async ({ prompt, aspectRatio }: GenerateIma
         }
     } catch (error) {
         console.error("Error generating image with Gemini:", error);
-        throw new Error("Gagal membuat gambar.");
+        throw new Error(error instanceof Error ? error.message : "Gagal membuat gambar.");
     }
 };
 
 export const editImage = async ({ image, prompt, useFaceLock }: EditImageOptions): Promise<ImageFile> => {
     try {
+        const ai = getAiInstance();
         let finalPrompt: string;
         
         if (useFaceLock) {
@@ -148,6 +164,7 @@ export const editImage = async ({ image, prompt, useFaceLock }: EditImageOptions
 
 export const changeOutfit = async ({ person, images, bodyOptions }: ChangeOutfitOptions): Promise<ImageFile> => {
     try {
+        const ai = getAiInstance();
         let prompt = `**[NON-NEGOTIABLE DIRECTIVE]**
 
 **PRIMARY OBJECTIVE:** Create a hyper-realistic, full-body photograph.
@@ -251,6 +268,7 @@ export const changeOutfit = async ({ person, images, bodyOptions }: ChangeOutfit
 
 export const improveIdolPrompt = async (prompt: string): Promise<string> => {
     try {
+        const ai = getAiInstance();
         const fullPrompt = `You are a creative director for a photoshoot. Take the following simple scene description for two people written in Indonesian and expand it into a more dynamic, detailed, and evocative prompt. Then, translate the entire improved prompt to English. Provide only the final English prompt, without any introductory text.
 
 Original Indonesian description: "${prompt}"`;
@@ -269,6 +287,7 @@ Original Indonesian description: "${prompt}"`;
 
 export const createPhotoWithIdol = async ({ userImage, idolImage, useIdolFaceLock, options }: CreatePhotoWithIdolOptions): Promise<ImageFile> => {
     try {
+        const ai = getAiInstance();
         let sceneDescription = '';
         if (options.manualPrompt && options.manualPrompt.trim() !== '') {
             // Manual prompt is now pre-improved and pre-translated to English from the UI.
@@ -333,6 +352,7 @@ ${sceneDescription}
 
 export const improvePrompt = async (prompt: string): Promise<string> => {
     try {
+        const ai = getAiInstance();
         const fullPrompt = `Anda adalah seorang ahli prompt engineering. Perluas dan tingkatkan deskripsi berikut untuk menghasilkan gambar AI yang lebih detail, artistik, dan imajinatif. Fokus pada penguatan dan penambahan detail spesifik tentang warna, pencahayaan, kualitas, komposisi, dan elemen lain yang diperlukan untuk gambar yang memukau, sambil mempertahankan ide intinya. Berikan jawaban hanya dalam bahasa Indonesia dan JANGAN tambahkan kata pengantar apa pun, langsung berikan prompt yang sudah ditingkatkan. Deskripsi asli: "${prompt}"`;
 
         const response = await ai.models.generateContent({
@@ -349,6 +369,7 @@ export const improvePrompt = async (prompt: string): Promise<string> => {
 
 export const translateToEnglish = async (text: string): Promise<string> => {
     try {
+        const ai = getAiInstance();
         const fullPrompt = `Translate the following Indonesian text to English. Provide only the English translation, without any introductory text. Indonesian text: "${text}"`;
         
         const response = await ai.models.generateContent({
@@ -365,6 +386,7 @@ export const translateToEnglish = async (text: string): Promise<string> => {
 
 export const improvePosePrompt = async (poseDescription: string): Promise<string> => {
     try {
+        const ai = getAiInstance();
         const fullPrompt = `You are a creative director specializing in photography and character art. Take the following simple pose description written in Indonesian and expand it into a more dynamic, detailed, and evocative pose description. Provide the result **only in English**. Do not add any introductory text, just the improved pose description.
 
 Original Indonesian description: "${poseDescription}"`;
@@ -383,6 +405,7 @@ Original Indonesian description: "${poseDescription}"`;
 
 export const identifyFashion = async (image: ImageFile): Promise<string> => {
     try {
+        const ai = getAiInstance();
         const prompt = `**Peran:** Anda adalah seorang ahli fashion dan stylist pribadi yang sangat berpengetahuan.
 **Tugas:** Analisis gambar pakaian yang disediakan dan berikan deskripsi mendetail untuk setiap item yang terlihat.
 
@@ -428,6 +451,7 @@ Mulai analisisnya sekarang.`;
 
 export const improveMultiImagePrompt = async (prompt: string): Promise<string> => {
     try {
+        const ai = getAiInstance();
         const fullPrompt = `You are a creative director for a complex photocomposition. Take the following simple scene description, which references multiple images (like "Photo 1", "Photo 2"), and expand it into a more dynamic, detailed, and evocative prompt in English. Ensure the instructions are clear for an AI to combine elements from different source images into a single, cohesive, hyper-realistic scene. Provide only the final English prompt.
 
 Original Indonesian description: "${prompt}"`;
@@ -446,6 +470,7 @@ Original Indonesian description: "${prompt}"`;
 
 export const improveVideoPrompt = async (prompt: string): Promise<string> => {
     try {
+        const ai = getAiInstance();
         const fullPrompt = `You are an expert video prompt engineer for text-to-video models like Google Veo. Take the following simple idea in Indonesian, expand it into a detailed, cinematic video prompt in English. Include rich details about camera shots (e.g., wide shot, dolly zoom, close-up), camera movement (e.g., panning, tracking shot), subject actions, visual style, and lighting (e.g., hyperrealistic, 8k, cinematic lighting, golden hour). Provide only the final English prompt, without any introductory text.
 
 Original Indonesian idea: "${prompt}"`;
@@ -469,6 +494,7 @@ interface CombineImagesOptions {
 
 export const combineImages = async ({ images, prompt }: CombineImagesOptions): Promise<ImageFile> => {
     try {
+        const ai = getAiInstance();
         if (images.length < 2) {
             throw new Error("Dibutuhkan setidaknya dua gambar untuk digabungkan.");
         }
