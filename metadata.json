@@ -1,0 +1,5 @@
+{
+  "name": "Style AI Favorit Kamu ver 1.0",
+  "description": "A web application to create custom AI art prompts by selecting various style options and generate images using Gemini.",
+  "requestFramePermissions": []
+}
