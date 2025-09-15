@@ -1,6 +1,3 @@
-
-
-
 import { GoogleGenAI, Modality, Part, Type } from "@google/genai";
 import type { AspectRatio, ImageFile, GantiOutfitImages, GantiOutfitBodyOptions, PhotoWithIdolOptions, UnderwearLingerieOptions } from '../types';
 
@@ -91,29 +88,45 @@ export const removeWatermark = async (image: ImageFile): Promise<ImageFile> => {
 export const generateImageFromText = async ({ prompt, aspectRatio }: GenerateImageFromTextOptions): Promise<ImageFile> => {
     try {
         const ai = getAiInstance();
-        const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt: prompt,
+        // Modify the prompt to include the aspect ratio, as gemini-2.5-flash-image-preview doesn't take it as a config parameter.
+        const generationPrompt = `Generate an image with an aspect ratio of ${aspectRatio}. The image should depict: ${prompt}`;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image-preview',
+            contents: {
+                parts: [
+                    { text: generationPrompt },
+                ],
+            },
             config: {
-                numberOfImages: 1,
-                outputMimeType: 'image/jpeg',
-                aspectRatio: aspectRatio,
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
             },
         });
         
-        if (response.generatedImages && response.generatedImages.length > 0) {
-            const base64Data = response.generatedImages[0].image.imageBytes;
-            const mimeType = 'image/jpeg';
-            return {
-                data: `data:${mimeType};base64,${base64Data}`,
-                mimeType: mimeType,
-            };
-        } else {
-            throw new Error("Tidak ada gambar yang dihasilkan.");
+        for (const part of response.candidates?.[0]?.content?.parts || []) {
+            if (part.inlineData) {
+                 const mimeType = part.inlineData.mimeType || 'image/jpeg';
+                const base64Data = part.inlineData.data;
+                return {
+                    data: `data:${mimeType};base64,${base64Data}`,
+                    mimeType: mimeType
+                };
+            }
         }
+        throw new Error("Tidak ada gambar yang dihasilkan. Coba prompt atau gaya yang berbeda.");
     } catch (error) {
         console.error("Error generating image with Gemini:", error);
-        throw new Error(error instanceof Error ? error.message : "Gagal membuat gambar.");
+        // Check for specific error messages and provide clearer feedback
+        if (error instanceof Error) {
+            if (error.message.includes("API_KEY")) {
+                 throw new Error("Kunci API tidak valid atau hilang. Periksa pengaturan environment variable Anda.");
+            }
+            if (error.message.includes("PERMISSION_DENIED") || error.message.includes("billed users")) {
+                 throw new Error("Izin ditolak. Pastikan API diaktifkan dan akun Anda memiliki penagihan yang dikonfigurasi jika diperlukan.");
+            }
+             throw new Error(`Gagal membuat gambar: ${error.message}`);
+        }
+        throw new Error("Gagal membuat gambar karena kesalahan yang tidak diketahui.");
     }
 };
 
