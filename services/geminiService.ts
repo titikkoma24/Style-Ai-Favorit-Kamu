@@ -1,6 +1,8 @@
 
-import { GoogleGenAI, Modality, Part } from "@google/genai";
-import type { AspectRatio, ImageFile, GantiOutfitImages, GantiOutfitBodyOptions, PhotoWithIdolOptions } from '../types';
+
+
+import { GoogleGenAI, Modality, Part, Type } from "@google/genai";
+import type { AspectRatio, ImageFile, GantiOutfitImages, GantiOutfitBodyOptions, PhotoWithIdolOptions, UnderwearLingerieOptions } from '../types';
 
 // Lazy-initialized singleton for the AI client.
 // This prevents the app from crashing on load if the API key isn't set in the environment.
@@ -266,19 +268,44 @@ export const changeOutfit = async ({ person, images, bodyOptions }: ChangeOutfit
     }
 };
 
-export const improveIdolPrompt = async (prompt: string): Promise<string> => {
+export const improveIdolPrompt = async (prompt: string): Promise<{ detailed: string; concise: string }> => {
     try {
         const ai = getAiInstance();
-        const fullPrompt = `You are a creative director for a photoshoot. Take the following simple scene description for two people written in Indonesian and expand it into a more dynamic, detailed, and evocative prompt. Then, translate the entire improved prompt to English. Provide only the final English prompt, without any introductory text.
+        const fullPrompt = `You are a creative director for a photoshoot. Your task is to take a user's simple scene description for two people and expand it into two versions of a highly effective prompt. The response must be in JSON format and in English.
 
-Original Indonesian description: "${prompt}"`;
+The user's original idea (in Indonesian) is: "${prompt}"
+
+Provide your response as a JSON object with two keys: "detailed" and "concise".
+1.  **detailed**: An expanded, highly descriptive, and evocative prompt, detailing the interaction, mood, and setting.
+2.  **concise**: A shorter, more direct prompt using effective keywords to capture the scene's essence.
+
+Both versions must be in English. The entire output must be a single, valid JSON object without any introductory text.`;
 
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: fullPrompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        detailed: { type: Type.STRING },
+                        concise: { type: Type.STRING }
+                    },
+                    required: ["detailed", "concise"]
+                },
+            },
         });
+        
+        const jsonString = response.text.trim().replace(/^```json\n?/, '').replace(/\n?```$/, '');
+        const parsed = JSON.parse(jsonString);
 
-        return response.text.trim();
+        if (typeof parsed.detailed === 'string' && typeof parsed.concise === 'string') {
+            return parsed;
+        } else {
+            console.error("Parsed JSON from AI is missing required fields for idol prompt.");
+            throw new Error("Gagal meningkatkan prompt idola: respons tidak valid.");
+        }
     } catch (error) {
         console.error("Error improving idol prompt:", error);
         throw new Error("Gagal meningkatkan prompt idola.");
@@ -350,17 +377,44 @@ ${sceneDescription}
 };
 
 
-export const improvePrompt = async (prompt: string): Promise<string> => {
+export const improvePrompt = async (prompt: string): Promise<{ detailed: string; concise: string }> => {
     try {
         const ai = getAiInstance();
-        const fullPrompt = `Anda adalah seorang ahli prompt engineering. Perluas dan tingkatkan deskripsi berikut untuk menghasilkan gambar AI yang lebih detail, artistik, dan imajinatif. Fokus pada penguatan dan penambahan detail spesifik tentang warna, pencahayaan, kualitas, komposisi, dan elemen lain yang diperlukan untuk gambar yang memukau, sambil mempertahankan ide intinya. Berikan jawaban hanya dalam bahasa Indonesia dan JANGAN tambahkan kata pengantar apa pun, langsung berikan prompt yang sudah ditingkatkan. Deskripsi asli: "${prompt}"`;
+        const fullPrompt = `You are an expert prompt engineer. Your task is to take a user's simple idea and expand it into two versions of a highly effective prompt for an AI image generator. The response must be in JSON format.
+
+The user's original idea (in Indonesian) is: "${prompt}"
+
+Provide your response as a JSON object with two keys: "detailed" and "concise".
+1.  **detailed**: An expanded, highly descriptive, and imaginative prompt. This version should be rich with specifics about color, lighting, quality, composition, and other artistic elements. The language should be artistic and evocative. This prompt must be in Indonesian.
+2.  **concise**: A shorter, more direct prompt that still captures the core idea but is optimized for powerful results with fewer words. This version should use keywords and phrases that are highly effective for AI image models. This prompt must also be in Indonesian.
+
+Do not add any introductory text or markdown formatting. The entire output must be a single, valid JSON object.`;
 
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: fullPrompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        detailed: { type: Type.STRING },
+                        concise: { type: Type.STRING }
+                    },
+                    required: ["detailed", "concise"]
+                },
+            },
         });
 
-        return response.text.trim();
+        const jsonString = response.text.trim().replace(/^```json\n?/, '').replace(/\n?```$/, '');
+        const parsed = JSON.parse(jsonString);
+
+        if (typeof parsed.detailed === 'string' && typeof parsed.concise === 'string') {
+            return parsed;
+        } else {
+            console.error("Parsed JSON from AI is missing required fields.");
+            throw new Error("Gagal meningkatkan prompt: respons tidak valid.");
+        }
     } catch (error) {
         console.error("Error improving prompt with Gemini:", error);
         throw new Error("Gagal meningkatkan prompt.");
@@ -384,19 +438,44 @@ export const translateToEnglish = async (text: string): Promise<string> => {
     }
 };
 
-export const improvePosePrompt = async (poseDescription: string): Promise<string> => {
+export const improvePosePrompt = async (poseDescription: string): Promise<{ detailed: string; concise: string }> => {
     try {
         const ai = getAiInstance();
-        const fullPrompt = `You are a creative director specializing in photography and character art. Take the following simple pose description written in Indonesian and expand it into a more dynamic, detailed, and evocative pose description. Provide the result **only in English**. Do not add any introductory text, just the improved pose description.
+        const fullPrompt = `You are a creative director specializing in photography. Your task is to take a simple pose description and expand it into two versions of a highly effective prompt for an AI image generator. The response must be in JSON format and in English.
 
-Original Indonesian description: "${poseDescription}"`;
+The user's original idea (in Indonesian) is: "${poseDescription}"
+
+Provide your response as a JSON object with two keys: "detailed" and "concise".
+1.  **detailed**: An expanded, highly descriptive, and evocative pose description.
+2.  **concise**: A shorter, more direct pose description using effective keywords.
+
+Both versions must be in English. The entire output must be a single, valid JSON object without any introductory text.`;
 
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: fullPrompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        detailed: { type: Type.STRING },
+                        concise: { type: Type.STRING }
+                    },
+                    required: ["detailed", "concise"]
+                },
+            },
         });
+        
+        const jsonString = response.text.trim().replace(/^```json\n?/, '').replace(/\n?```$/, '');
+        const parsed = JSON.parse(jsonString);
 
-        return response.text.trim();
+        if (typeof parsed.detailed === 'string' && typeof parsed.concise === 'string') {
+            return parsed;
+        } else {
+            console.error("Parsed JSON from AI is missing required fields for pose prompt.");
+            throw new Error("Gagal meningkatkan deskripsi pose: respons tidak valid.");
+        }
     } catch (error) {
         console.error("Error improving pose prompt with Gemini:", error);
         throw new Error("Gagal meningkatkan deskripsi pose.");
@@ -449,38 +528,88 @@ Mulai analisisnya sekarang.`;
     }
 };
 
-export const improveMultiImagePrompt = async (prompt: string): Promise<string> => {
+export const improveMultiImagePrompt = async (prompt: string): Promise<{ detailed: string; concise: string }> => {
     try {
         const ai = getAiInstance();
-        const fullPrompt = `You are a creative director for a complex photocomposition. Take the following simple scene description, which references multiple images (like "Photo 1", "Photo 2"), and expand it into a more dynamic, detailed, and evocative prompt in English. Ensure the instructions are clear for an AI to combine elements from different source images into a single, cohesive, hyper-realistic scene. Provide only the final English prompt.
+        const fullPrompt = `You are a creative director for a complex photocomposition. Your task is to take a simple scene description, which references multiple images, and expand it into two highly effective prompt versions in English. The response must be in JSON format.
 
-Original Indonesian description: "${prompt}"`;
+The user's original idea (in Indonesian) is: "${prompt}"
+
+Provide your response as a JSON object with two keys: "detailed" and "concise".
+1.  **detailed**: An expanded, highly descriptive prompt ensuring clear instructions for combining elements from different source images into a single, cohesive, hyper-realistic scene.
+2.  **concise**: A shorter, more direct prompt using keywords to define the composition and elements from each photo.
+
+Both versions must be in English. The entire output must be a single, valid JSON object without any introductory text.`;
 
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: fullPrompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        detailed: { type: Type.STRING },
+                        concise: { type: Type.STRING }
+                    },
+                    required: ["detailed", "concise"]
+                },
+            },
         });
+        
+        const jsonString = response.text.trim().replace(/^```json\n?/, '').replace(/\n?```$/, '');
+        const parsed = JSON.parse(jsonString);
 
-        return response.text.trim();
+        if (typeof parsed.detailed === 'string' && typeof parsed.concise === 'string') {
+            return parsed;
+        } else {
+            console.error("Parsed JSON from AI is missing required fields for multi-image prompt.");
+            throw new Error("Gagal meningkatkan prompt multi-gambar: respons tidak valid.");
+        }
     } catch (error) {
         console.error("Error improving multi-image prompt:", error);
         throw new Error("Gagal meningkatkan prompt multi-gambar.");
     }
 };
 
-export const improveVideoPrompt = async (prompt: string): Promise<string> => {
+export const improveVideoPrompt = async (prompt: string): Promise<{ detailed: string; concise: string }> => {
     try {
         const ai = getAiInstance();
-        const fullPrompt = `You are an expert video prompt engineer for text-to-video models like Google Veo. Take the following simple idea in Indonesian, expand it into a detailed, cinematic video prompt in English. Include rich details about camera shots (e.g., wide shot, dolly zoom, close-up), camera movement (e.g., panning, tracking shot), subject actions, visual style, and lighting (e.g., hyperrealistic, 8k, cinematic lighting, golden hour). Provide only the final English prompt, without any introductory text.
+        const fullPrompt = `You are an expert video prompt engineer for text-to-video models like Google Veo. Your task is to take a simple idea and expand it into two versions of a detailed, cinematic video prompt in English. The response must be in JSON format.
 
-Original Indonesian idea: "${prompt}"`;
+The user's original idea (in Indonesian) is: "${prompt}"
+
+Provide your response as a JSON object with two keys: "detailed" and "concise".
+1.  **detailed**: An expanded prompt including rich details about camera shots (e.g., wide shot, dolly zoom, close-up), camera movement (e.g., panning, tracking shot), subject actions, visual style, and lighting.
+2.  **concise**: A shorter prompt that captures the cinematic essence with powerful keywords, focusing on the core action and visual style.
+
+Both versions must be in English. The entire output must be a single, valid JSON object without any introductory text.`;
 
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: fullPrompt,
+             config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        detailed: { type: Type.STRING },
+                        concise: { type: Type.STRING }
+                    },
+                    required: ["detailed", "concise"]
+                },
+            },
         });
+        
+        const jsonString = response.text.trim().replace(/^```json\n?/, '').replace(/\n?```$/, '');
+        const parsed = JSON.parse(jsonString);
 
-        return response.text.trim();
+        if (typeof parsed.detailed === 'string' && typeof parsed.concise === 'string') {
+            return parsed;
+        } else {
+            console.error("Parsed JSON from AI is missing required fields for video prompt.");
+            throw new Error("Gagal meningkatkan prompt video: respons tidak valid.");
+        }
     } catch (error) {
         console.error("Error improving video prompt:", error);
         throw new Error("Gagal meningkatkan prompt video.");
@@ -546,5 +675,65 @@ Begin the combination process now.`;
     } catch (error) {
         console.error("Error combining images:", error);
         throw new Error(error instanceof Error ? error.message : "Gagal menggabungkan gambar.");
+    }
+};
+
+export const generateLingerieModel = async ({ clothingImage, options }: { clothingImage: ImageFile, options: UnderwearLingerieOptions }): Promise<ImageFile> => {
+    try {
+        const ai = getAiInstance();
+        const prompt = `**PRIMARY GOAL:** Create a hyper-realistic, professional photograph of a model wearing the specific lingerie/underwear item provided in the input image.
+
+**CRITICAL RULE #1: EXACT CLOTHING REPLICATION**
+- You MUST analyze the lingerie/underwear item in the provided image.
+- The model in the final generated photo MUST be wearing this EXACT item. Replicate the design, color, fabric, and details with 100% accuracy.
+- **DO NOT** invent a new design. **DO NOT** change the clothing.
+
+**CRITICAL RULE #2: MODEL SPECIFICATIONS**
+- Create a female model that strictly adheres to the following characteristics:
+    - Ethnicity: '${options.ethnicity}'
+    - Body Type: '${options.bodyType}', with a natural and realistic physique.
+    - Bust Size: '${options.bustSize}'.
+    - Hair Color: '${options.hairColor}'.
+
+**SCENE & COMPOSITION:**
+- Place the model in the following setting: '${options.setting}'.
+- The pose MUST be as follows: '${options.pose}'. It should be elegant, confident, and suitable for a professional lingerie photoshoot, showcasing the clothing item well.
+- The lighting should be flattering and professional, matching the mood of the setting.
+
+**FINAL IMAGE QUALITY:**
+- The output must be an 8k, hyper-realistic, and sharply focused photograph.
+- The final image should have the quality of a high-end fashion magazine editorial.
+- Ensure the integration of the clothing onto the model is seamless and photorealistic.`;
+
+        const base64ImageData = clothingImage.data.split(',')[1];
+        
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image-preview',
+            contents: {
+                parts: [
+                    { inlineData: { data: base64ImageData, mimeType: clothingImage.mimeType } },
+                    { text: prompt },
+                ],
+            },
+            config: {
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            },
+        });
+
+        for (const part of response.candidates?.[0]?.content?.parts || []) {
+            if (part.inlineData) {
+                const mimeType = part.inlineData.mimeType;
+                const base64Data = part.inlineData.data;
+                return {
+                    data: `data:${mimeType};base64,${base64Data}`,
+                    mimeType: mimeType
+                };
+            }
+        }
+        throw new Error("Model tidak mengembalikan gambar. Coba dengan gambar atau opsi yang berbeda.");
+
+    } catch (error) {
+        console.error("Error generating lingerie model:", error);
+        throw new Error(error instanceof Error ? error.message : "Gagal membuat gambar model lingerie.");
     }
 };

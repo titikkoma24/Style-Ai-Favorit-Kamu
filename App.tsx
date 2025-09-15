@@ -1,9 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import Header from './components/Header';
 import PromptStudio from './components/PromptStudio';
 import ImageDisplay from './components/ImageDisplay';
-import { generateImageFromText, editImage, translateToEnglish, changeOutfit, createPhotoWithIdol, removeWatermark, identifyFashion, combineImages } from './services/geminiService';
-import type { AspectRatio, GantiOutfitBodyOptions, GantiOutfitImages, ImageFile, PhotoWithIdolOptions, SemuaBisaDisiniOptions, TouchUpOptions } from './types';
+import PinAccess from './components/PinAccess';
+import { generateImageFromText, editImage, translateToEnglish, changeOutfit, createPhotoWithIdol, removeWatermark, identifyFashion, combineImages, generateLingerieModel } from './services/geminiService';
+import type { AspectRatio, GantiOutfitBodyOptions, GantiOutfitImages, ImageFile, PhotoWithIdolOptions, SemuaBisaDisiniOptions, TouchUpOptions, UnderwearLingerieOptions } from './types';
 
 interface GenerateOptions {
     prompt: string;
@@ -13,15 +14,18 @@ interface GenerateOptions {
     useIdolFaceLock?: boolean;
     aspectRatio: AspectRatio['value'];
     translatePrompt?: boolean;
-    customStyle?: 'gantiOutfit' | 'photoWithIdol' | 'touchUpWajah' | 'identifikasiFashion' | 'removeWatermark' | 'tingkatkanKualitas' | 'semuaBisaDisini';
+    customStyle?: 'gantiOutfit' | 'photoWithIdol' | 'touchUpWajah' | 'identifikasiFashion' | 'removeWatermark' | 'tingkatkanKualitas' | 'semuaBisaDisini' | 'underwearLingerie';
     customStyleImages?: GantiOutfitImages;
     touchUpOptions?: TouchUpOptions;
     gantiOutfitBodyOptions?: GantiOutfitBodyOptions;
     photoWithIdolOptions?: PhotoWithIdolOptions;
     semuaBisaDisiniOptions?: SemuaBisaDisiniOptions;
+    underwearLingerieOptions?: UnderwearLingerieOptions;
 }
 
 const App: React.FC = () => {
+    const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
+    const [remainingTime, setRemainingTime] = useState<number | null>(null);
     const [generatedImage, setGeneratedImage] = useState<ImageFile | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
@@ -29,6 +33,83 @@ const App: React.FC = () => {
     const [fashionAnalysisSummary, setFashionAnalysisSummary] = useState<string | null>(null);
     const [history, setHistory] = useState<ImageFile[]>([]);
     const [currentIndex, setCurrentIndex] = useState<number>(-1);
+
+    const handleLock = useCallback(() => {
+        localStorage.removeItem('accessType');
+        localStorage.removeItem('accessExpiry');
+        setIsUnlocked(false);
+    }, []);
+
+    useEffect(() => {
+        const checkAccess = () => {
+            const accessType = localStorage.getItem('accessType');
+            if (accessType === 'unlimited') {
+                setIsUnlocked(true);
+                return;
+            }
+
+            const accessExpiryStr = localStorage.getItem('accessExpiry');
+            if (accessType === 'timed' && accessExpiryStr) {
+                const accessExpiry = parseInt(accessExpiryStr, 10);
+                if (accessExpiry > Date.now()) {
+                    setIsUnlocked(true);
+                } else {
+                    handleLock();
+                }
+            } else {
+                setIsUnlocked(false);
+            }
+        };
+        checkAccess();
+    }, [handleLock]);
+    
+    useEffect(() => {
+        let interval: number | undefined;
+        if (isUnlocked && localStorage.getItem('accessType') === 'timed') {
+            const updateTimer = () => {
+                const accessExpiryStr = localStorage.getItem('accessExpiry');
+                if (accessExpiryStr) {
+                    const accessExpiry = parseInt(accessExpiryStr, 10);
+                    const timeLeft = Math.round((accessExpiry - Date.now()) / 1000);
+
+                    if (timeLeft > 0) {
+                        setRemainingTime(timeLeft);
+                    } else {
+                        setRemainingTime(null);
+                        handleLock();
+                    }
+                }
+            };
+            
+            updateTimer(); 
+            interval = window.setInterval(updateTimer, 1000);
+
+        } else {
+            setRemainingTime(null);
+        }
+
+        return () => {
+            if (interval) {
+                clearInterval(interval);
+            }
+        };
+    }, [isUnlocked, handleLock]);
+
+    const handleUnlock = (pin: string): boolean => {
+        if (pin === 'sudutlain') {
+            localStorage.setItem('accessType', 'timed');
+            localStorage.setItem('accessExpiry', (Date.now() + 30 * 60 * 1000).toString());
+            setIsUnlocked(true);
+            return true;
+        }
+        if (pin === '24') {
+            localStorage.setItem('accessType', 'unlimited');
+            localStorage.removeItem('accessExpiry');
+            setIsUnlocked(true);
+            return true;
+        }
+        return false;
+    };
 
     const updateHistory = (newImage: ImageFile) => {
         const newHistory = history.slice(0, currentIndex + 1);
@@ -72,7 +153,12 @@ const App: React.FC = () => {
 
             let initialImageFile: ImageFile;
 
-            if (options.customStyle === 'semuaBisaDisini' && options.semuaBisaDisiniOptions) {
+            if (options.customStyle === 'underwearLingerie' && options.image && options.underwearLingerieOptions) {
+                initialImageFile = await generateLingerieModel({
+                    clothingImage: options.image,
+                    options: options.underwearLingerieOptions,
+                });
+            } else if (options.customStyle === 'semuaBisaDisini' && options.semuaBisaDisiniOptions) {
                 const { images, prompt, numberOfPhotos } = options.semuaBisaDisiniOptions;
                 const validImages = images.filter(img => img !== null) as ImageFile[];
                 if (validImages.length !== numberOfPhotos) {
@@ -261,7 +347,7 @@ Output akhir harus berupa gambar yang sama persis, tetapi ditingkatkan ke standa
         } finally {
             setIsLoading(false);
         }
-    }, [currentIndex]);
+    }, []);
 
     const handleUndo = useCallback(() => {
         const newIndex = Math.max(0, currentIndex - 1);
@@ -275,9 +361,13 @@ Output akhir harus berupa gambar yang sama persis, tetapi ditingkatkan ke standa
         setGeneratedImage(history[newIndex]);
     }, [currentIndex, history]);
 
+    if (!isUnlocked) {
+        return <PinAccess onUnlock={handleUnlock} />;
+    }
+
     return (
         <div className="min-h-screen bg-gray-900 text-gray-200">
-            <Header />
+            <Header onLock={handleLock} remainingTime={remainingTime} />
             <main className="container mx-auto p-4 lg:p-8">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <PromptStudio 

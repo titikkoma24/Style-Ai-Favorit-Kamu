@@ -39,7 +39,7 @@ export interface GantiOutfitBodyOptions {
 }
 
 export interface CustomStyle {
-    id: 'gantiOutfit' | 'photoWithIdol' | 'touchUpWajah' | 'semuaBisaDisini' | 'promptVideoVeo' | 'identifikasiFashion' | 'removeWatermark' | 'tingkatkanKualitas';
+    id: 'gantiOutfit' | 'photoWithIdol' | 'touchUpWajah' | 'semuaBisaDisini' | 'promptVideoVeo' | 'identifikasiFashion' | 'removeWatermark' | 'tingkatkanKualitas' | 'underwearLingerie';
     name: string;
     note: string;
 }
@@ -64,4 +64,13 @@ export interface SemuaBisaDisiniOptions {
     numberOfPhotos: number;
     images: (ImageFile | null)[];
     prompt: string;
+}
+
+export interface UnderwearLingerieOptions {
+    ethnicity: 'asia' | 'kaukasia' | 'latina' | 'kulit hitam' | 'timur tengah' | 'indonesia';
+    bodyType: 'langsing' | 'atletis' | 'berisi' | 'melengkung';
+    hairColor: 'pirang' | 'coklat' | 'hitam' | 'merah';
+    setting: 'studio minimalis' | 'kamar tidur mewah' | 'pantai saat senja';
+    bustSize: 'kecil' | 'sedang' | 'besar';
+    pose: string;
 }

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { STYLE_CATEGORIES, RECOMMENDED_STYLES, ASPECT_RATIOS, CUSTOM_STYLES, LIPSTICK_COLORS, HAIRSTYLE_PRESETS, IDOL_POSE_TEMPLATES, SHOT_STYLE_TEMPLATES, LIGHT_STYLE_TEMPLATES } from '../constants';
+import { STYLE_CATEGORIES, RECOMMENDED_STYLES, ASPECT_RATIOS, CUSTOM_STYLES, LIPSTICK_COLORS, HAIRSTYLE_PRESETS, IDOL_POSE_TEMPLATES, SHOT_STYLE_TEMPLATES, LIGHT_STYLE_TEMPLATES, LINGERIE_POSE_TEMPLATES } from '../constants';
 import { improvePrompt, translateToEnglish, improveIdolPrompt, improveMultiImagePrompt, improveVideoPrompt } from '../services/geminiService';
 import ImageUploader from './ImageUploader';
-import type { StyleCategory, AspectRatio, GantiOutfitImages, ImageFile, CustomStyle, TouchUpOptions, GantiOutfitBodyOptions, PhotoWithIdolOptions, SemuaBisaDisiniOptions } from '../types';
+import type { StyleCategory, AspectRatio, GantiOutfitImages, ImageFile, CustomStyle, TouchUpOptions, GantiOutfitBodyOptions, PhotoWithIdolOptions, SemuaBisaDisiniOptions, UnderwearLingerieOptions } from '../types';
 
 interface PromptStudioProps {
     onGenerate: (options: { 
@@ -19,6 +19,7 @@ interface PromptStudioProps {
         gantiOutfitBodyOptions?: GantiOutfitBodyOptions;
         photoWithIdolOptions?: PhotoWithIdolOptions;
         semuaBisaDisiniOptions?: SemuaBisaDisiniOptions;
+        underwearLingerieOptions?: UnderwearLingerieOptions;
     }) => void;
     isLoading: boolean;
 }
@@ -40,6 +41,38 @@ const SparklesIcon: React.FC<{className?: string}> = ({className}) => (
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6.343 6.343l-2.828 2.828M17.657 17.657l2.828 2.828M18 5h4M21 3v4M16.243 7.757l-2.828-2.828M12 21a9 9 0 110-18 9 9 0 010 18z" />
     </svg>
 );
+
+const ImprovedOptionsDisplay: React.FC<{
+    detailed: string;
+    concise: string;
+    onSelect: (version: string) => void;
+    onClose: () => void;
+}> = ({ detailed, concise, onSelect, onClose }) => {
+    return (
+        <div className="mt-3 p-4 bg-gray-900/70 border border-gray-700 rounded-lg flex flex-col gap-4 animate-fade-in">
+            <div className="flex justify-between items-center">
+                <h4 className="text-md font-semibold text-purple-400">Pilih Versi Prompt</h4>
+                <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl leading-none">&times;</button>
+            </div>
+            {/* Detailed Version */}
+            <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-gray-300">Versi Detail:</label>
+                <p className="text-xs bg-gray-800 p-2 rounded-md text-gray-400 max-h-24 overflow-y-auto">{detailed}</p>
+                <button onClick={() => onSelect(detailed)} className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-1 px-3 rounded-md transition self-start">
+                    Gunakan Versi Ini
+                </button>
+            </div>
+             {/* Concise Version */}
+             <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-gray-300">Versi Ringkas:</label>
+                <p className="text-xs bg-gray-800 p-2 rounded-md text-gray-400 max-h-24 overflow-y-auto">{concise}</p>
+                <button onClick={() => onSelect(concise)} className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-1 px-3 rounded-md transition self-start">
+                    Gunakan Versi Ini
+                </button>
+            </div>
+        </div>
+    );
+};
 
 
 const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) => {
@@ -79,6 +112,11 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
     const [translatedActionFigureOutfit, setTranslatedActionFigureOutfit] = useState<string>('');
     const [isTranslatingOutfit, setIsTranslatingOutfit] = useState<boolean>(false);
 
+    // State untuk "Giant Selfie"
+    const [giantSelfieMonument, setGiantSelfieMonument] = useState<string>('Monas, Jakarta');
+    const [translatedGiantSelfieMonument, setTranslatedGiantSelfieMonument] = useState<string>('');
+    const [isTranslatingMonument, setIsTranslatingMonument] = useState<boolean>(false);
+
     // State untuk Style Kustom
     const [activeTab, setActiveTab] = useState<'rekomendasi' | 'kustom'>('rekomendasi');
     const [activeCustomStyle, setActiveCustomStyle] = useState<CustomStyle['id'] | null>(null);
@@ -115,7 +153,25 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
     const [isImprovingSBDPrompt, setIsImprovingSBDPrompt] = useState(false);
     const [veoManualPrompt, setVeoManualPrompt] = useState<string>('');
     const [isImprovingVeoPrompt, setIsImprovingVeoPrompt] = useState<boolean>(false);
-    const [improvedVeoPrompt, setImprovedVeoPrompt] = useState<string>('');
+    const [improvedVeoPrompt, setImprovedVeoPrompt] = useState<{ detailed: string, concise: string } | null>(null);
+    const [selectedVeoVersion, setSelectedVeoVersion] = useState<'detailed' | 'concise'>('detailed');
+    const [underwearLingerieOptions, setUnderwearLingerieOptions] = useState<UnderwearLingerieOptions>({
+        ethnicity: 'indonesia',
+        bodyType: 'atletis',
+        hairColor: 'coklat',
+        setting: 'studio minimalis',
+        bustSize: 'sedang',
+        pose: LINGERIE_POSE_TEMPLATES[0].value,
+    });
+    
+    // State for improved prompt choices
+    const [improvedOptions, setImprovedOptions] = useState<{
+        key: string; // To identify which input the options are for
+        detailed: string;
+        concise: string;
+        onSelect: (version: string) => void;
+        onClose: () => void;
+    } | null>(null);
 
 
     // Effect for debounced translation of main subject
@@ -146,9 +202,13 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
     useEffect(() => {
         let finalPrompt: string;
         if (activeTab === 'kustom' && activeCustomStyle === 'promptVideoVeo') {
-            finalPrompt = improvedVeoPrompt || 'Tulis ide Anda di atas dan klik "Tingkatkan" untuk membuat prompt video.';
+            if (improvedVeoPrompt) {
+                 finalPrompt = improvedVeoPrompt[selectedVeoVersion];
+            } else {
+                 finalPrompt = 'Tulis ide Anda di atas dan klik "Tingkatkan" untuk membuat prompt video.';
+            }
         } else if (uploadedImage) {
-            const customStylesWithAutoPrompt: CustomStyle['id'][] = ['gantiOutfit', 'touchUpWajah', 'identifikasiFashion', 'removeWatermark', 'tingkatkanKualitas', 'semuaBisaDisini', 'promptVideoVeo'];
+            const customStylesWithAutoPrompt: CustomStyle['id'][] = ['gantiOutfit', 'touchUpWajah', 'identifikasiFashion', 'removeWatermark', 'tingkatkanKualitas', 'semuaBisaDisini', 'promptVideoVeo', 'underwearLingerie'];
             if (activeTab === 'kustom' && activeCustomStyle && customStylesWithAutoPrompt.includes(activeCustomStyle)) {
                  if(activeCustomStyle === 'semuaBisaDisini') {
                     finalPrompt = semuaBisaDisiniOptions.prompt || "Tulis deskripsi untuk menggabungkan foto di atas.";
@@ -164,6 +224,9 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
                  else {
                     finalPrompt = "Pilih template dan klik 'Buat Prompt dari Template' di atas, atau tulis prompt manual.";
                 }
+            } else if (selectedStyle === '__GIANT_SELFIE__') {
+                const monumentText = translatedGiantSelfieMonument || giantSelfieMonument;
+                finalPrompt = `Transform the photo man/woman into a giant with a crouching position like a giant on the side ${monumentText}, while maintaining the resemblance of his face to the uploaded reference photo. His hands holding his head looked confused looking at the camera with a dramatic effect using a Nikon D3000 camera. The photo style is very realistic, with cinematic lighting, cloudy blue skies, and small people walking around, as if photographed with a 16mm ultra wide angle lens.`;
             } else if (selectedStyle === '__ACTION_FIGURE_CUSTOM__') {
                 const basePrompt = `A hyper-realistic 3D render, 3:4 ratio. A collectible action figure, 100% face similarity to the uploaded photo`;
                 if (translatedActionFigureOutfit) {
@@ -201,7 +264,31 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
         }
         
         setGeneratedPrompt(finalPrompt);
-    }, [mainSubject, translatedMainSubject, selections, uploadedImage, selectedStyle, styleModifiers, customPrompt, activeTab, activeCustomStyle, translatedActionFigureOutfit, translateCustomPrompt, translatedCustomPrompt, isTranslatingCustomPrompt, photoWithIdolOptions.manualPrompt, idolTemplatePrompt, semuaBisaDisiniOptions.prompt, improvedVeoPrompt]);
+    }, [mainSubject, translatedMainSubject, selections, uploadedImage, selectedStyle, styleModifiers, customPrompt, activeTab, activeCustomStyle, translatedActionFigureOutfit, translateCustomPrompt, translatedCustomPrompt, isTranslatingCustomPrompt, photoWithIdolOptions.manualPrompt, idolTemplatePrompt, semuaBisaDisiniOptions.prompt, improvedVeoPrompt, selectedVeoVersion, giantSelfieMonument, translatedGiantSelfieMonument]);
+
+    // Effect untuk terjemahan monumen giant selfie
+    useEffect(() => {
+        if (selectedStyle !== '__GIANT_SELFIE__' || !giantSelfieMonument.trim()) {
+            setTranslatedGiantSelfieMonument('');
+            if (isTranslatingMonument) setIsTranslatingMonument(false);
+            return;
+        }
+
+        setIsTranslatingMonument(true);
+        const timer = setTimeout(async () => {
+            try {
+                const translation = await translateToEnglish(giantSelfieMonument);
+                setTranslatedGiantSelfieMonument(translation);
+            } catch (error) {
+                console.error("Gagal menerjemahkan monumen:", error);
+                setTranslatedGiantSelfieMonument('');
+            } finally {
+                setIsTranslatingMonument(false);
+            }
+        }, 5000); // Jeda 5 detik
+
+        return () => clearTimeout(timer);
+    }, [giantSelfieMonument, selectedStyle]);
 
     // Effect untuk terjemahan kostum action figure
     useEffect(() => {
@@ -251,10 +338,14 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
         return () => clearTimeout(timer);
     }, [customPrompt, selectedStyle, translateCustomPrompt]);
 
-    // Effect to auto-enable face lock for certain custom styles
+    // Effect to auto-manage face lock
     useEffect(() => {
-        if (activeTab === 'kustom' && (activeCustomStyle === 'gantiOutfit' || activeCustomStyle === 'photoWithIdol' || activeCustomStyle === 'touchUpWajah' || activeCustomStyle === 'tingkatkanKualitas')) {
-            setIsFaceLockEnabled(true);
+        if (activeTab === 'kustom') {
+            if (['gantiOutfit', 'photoWithIdol', 'touchUpWajah', 'tingkatkanKualitas'].includes(activeCustomStyle || '')) {
+                setIsFaceLockEnabled(true);
+            } else if (['underwearLingerie', 'identifikasiFashion', 'removeWatermark', 'semuaBisaDisini'].includes(activeCustomStyle || '')) {
+                setIsFaceLockEnabled(false);
+            }
         }
     }, [activeTab, activeCustomStyle]);
 
@@ -382,8 +473,16 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
         if (!semuaBisaDisiniOptions.prompt.trim() || isImprovingSBDPrompt) return;
         setIsImprovingSBDPrompt(true);
         try {
-            const improvedEnglishPrompt = await improveMultiImagePrompt(semuaBisaDisiniOptions.prompt);
-            setSemuaBisaDisiniOptions(p => ({ ...p, prompt: improvedEnglishPrompt }));
+            const improved = await improveMultiImagePrompt(semuaBisaDisiniOptions.prompt);
+            setImprovedOptions({
+                ...improved,
+                key: 'sbd',
+                onSelect: (version) => {
+                    setSemuaBisaDisiniOptions(p => ({ ...p, prompt: version }));
+                    setImprovedOptions(null);
+                },
+                onClose: () => setImprovedOptions(null)
+            });
         } catch (error) {
             console.error("Gagal meningkatkan prompt 'Semua Bisa Disini':", error);
         } finally {
@@ -397,7 +496,15 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
         setIsImprovingSubject(true);
         try {
             const improved = await improvePrompt(mainSubject);
-            setMainSubject(improved);
+            setImprovedOptions({
+                ...improved,
+                key: 'mainSubject',
+                onSelect: (version) => {
+                    setMainSubject(version);
+                    setImprovedOptions(null);
+                },
+                onClose: () => setImprovedOptions(null)
+            });
         } catch (error) {
             console.error("Gagal meningkatkan subjek:", error);
         } finally {
@@ -410,7 +517,15 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
         setIsImprovingPrompt(true);
         try {
             const improved = await improvePrompt(customPrompt);
-            setCustomPrompt(improved);
+            setImprovedOptions({
+                ...improved,
+                key: 'customPrompt',
+                onSelect: (version) => {
+                    setCustomPrompt(version);
+                    setImprovedOptions(null);
+                },
+                onClose: () => setImprovedOptions(null)
+            });
         } catch (error) {
             console.error("Gagal meningkatkan prompt:", error);
         } finally {
@@ -422,8 +537,16 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
         if (!photoWithIdolOptions.manualPrompt.trim() || isImprovingIdolPrompt) return;
         setIsImprovingIdolPrompt(true);
         try {
-            const improvedEnglishPrompt = await improveIdolPrompt(photoWithIdolOptions.manualPrompt);
-            setPhotoWithIdolOptions(p => ({ ...p, manualPrompt: improvedEnglishPrompt }));
+            const improved = await improveIdolPrompt(photoWithIdolOptions.manualPrompt);
+             setImprovedOptions({
+                ...improved,
+                key: 'idol',
+                onSelect: (version) => {
+                    setPhotoWithIdolOptions(p => ({ ...p, manualPrompt: version }));
+                    setImprovedOptions(null);
+                },
+                onClose: () => setImprovedOptions(null)
+            });
         } catch (error) {
             console.error("Gagal meningkatkan prompt idola:", error);
             // Optionally, show an alert to the user
@@ -450,20 +573,34 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
     const handleImproveVeoPrompt = async () => {
         if (!veoManualPrompt.trim() || isImprovingVeoPrompt) return;
         setIsImprovingVeoPrompt(true);
-        setImprovedVeoPrompt('');
+        setImprovedVeoPrompt(null);
         try {
-            const improvedEnglishPrompt = await improveVideoPrompt(veoManualPrompt);
-            setImprovedVeoPrompt(improvedEnglishPrompt);
+            const improved = await improveVideoPrompt(veoManualPrompt);
+            setImprovedVeoPrompt(improved);
+            setSelectedVeoVersion('detailed');
         } catch (error) {
             console.error("Gagal meningkatkan prompt Veo:", error);
-            setImprovedVeoPrompt("Gagal meningkatkan prompt. Silakan coba lagi.");
+            // setImprovedVeoPrompt("Gagal meningkatkan prompt. Silakan coba lagi.");
         } finally {
             setIsImprovingVeoPrompt(false);
         }
     };
 
     const handleGenerateClick = () => {
-        if (activeTab === 'kustom' && activeCustomStyle === 'semuaBisaDisini') {
+        if (activeTab === 'kustom' && activeCustomStyle === 'underwearLingerie') {
+            if (!uploadedImage) {
+                alert('Silakan unggah foto underwear/lingerie.');
+                return;
+            }
+            onGenerate({
+                prompt: 'underwear-lingerie-prompt',
+                image: uploadedImage,
+                useFaceLock: false, // Not applicable
+                aspectRatio,
+                customStyle: 'underwearLingerie',
+                underwearLingerieOptions: underwearLingerieOptions,
+            });
+        } else if (activeTab === 'kustom' && activeCustomStyle === 'semuaBisaDisini') {
             onGenerate({
                 prompt: 'semua-bisa-disini-prompt',
                 image: null, 
@@ -594,7 +731,12 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
 
     const isFullOutfitMode = !!gantiOutfitImages.fullOutfit;
     const isSeparatePiecesMode = !!gantiOutfitImages.outfit || !!gantiOutfitImages.pants || !!gantiOutfitImages.shoes;
-    const isFaceLockDisabled = activeTab === 'kustom' && (activeCustomStyle === 'gantiOutfit' || activeCustomStyle === 'photoWithIdol' || activeCustomStyle === 'touchUpWajah' || activeCustomStyle === 'tingkatkanKualitas');
+    const isFaceLockDisabled = activeTab === 'kustom' && (['gantiOutfit', 'photoWithIdol', 'touchUpWajah', 'tingkatkanKualitas'].includes(activeCustomStyle || ''));
+    const isFaceLockControlDisabled = isFaceLockDisabled || (activeCustomStyle !== null && !['gantiOutfit', 'photoWithIdol', 'touchUpWajah', 'tingkatkanKualitas'].includes(activeCustomStyle));
+
+    const uploaderLabel = activeCustomStyle === 'underwearLingerie' 
+        ? '3. Unggah Foto Underwear/Lingerie' 
+        : uploadedImage ? 'Foto Utama' : '3. Unggah Foto (Opsional)';
     
     const generateButtonText = 
         (activeTab === 'kustom' && activeCustomStyle === 'identifikasiFashion') ? 'Mulai Analisis' :
@@ -656,7 +798,10 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
                         className="w-full bg-gray-900 border border-gray-600 rounded-md p-3 text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
                         placeholder="Contoh: Seekor naga megah terbang di atas kota futuristik"
                         value={mainSubject}
-                        onChange={(e) => setMainSubject(e.target.value)}
+                        onChange={(e) => {
+                            setMainSubject(e.target.value);
+                            if (improvedOptions?.key === 'mainSubject') setImprovedOptions(null);
+                        }}
                     />
                     {isTranslatingSubject && (
                         <p className="text-xs text-amber-400 mt-2 animate-pulse">Menerjemahkan subjek utama setelah 5 detik jeda...</p>
@@ -669,11 +814,12 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
                         {isImprovingSubject ? <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> : <SparklesIcon className="w-5 h-5"/>}
                         {isImprovingSubject ? 'Meningkatkan...' : 'Tingkatkan dengan AI'}
                     </button>
+                     {improvedOptions?.key === 'mainSubject' && <ImprovedOptionsDisplay {...improvedOptions} />}
                 </div>
             )}
             
             <ImageUploader 
-                label={uploadedImage ? 'Foto Utama' : '3. Unggah Foto (Opsional)'}
+                label={uploaderLabel}
                 image={uploadedImage}
                 onImageSelect={(file) => {
                     const event = { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>;
@@ -690,7 +836,7 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
                     className="h-4 w-4 rounded border-gray-500 bg-gray-700 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
                     checked={isFaceLockEnabled}
                     onChange={(e) => setIsFaceLockEnabled(e.target.checked)}
-                    disabled={isFaceLockDisabled}
+                    disabled={isFaceLockControlDisabled}
                 />
                 <label htmlFor="faceLock" className={`ml-2 text-sm ${uploadedImage ? 'text-gray-300' : 'text-gray-500'}`}>
                     Kunci Wajah
@@ -720,6 +866,21 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
                                 ))}
                             </select>
                             
+                            {selectedStyle === '__GIANT_SELFIE__' && (
+                                 <div className="mt-4 flex flex-col gap-3 p-3 bg-gray-900/50 rounded-md border border-gray-700">
+                                     <label htmlFor="giantSelfieMonument" className="block text-xs font-medium text-gray-400">Tuliskan nama monumen atau tempat ikonik (dalam Bahasa Indonesia):</label>
+                                     <input
+                                        id="giantSelfieMonument"
+                                        type="text"
+                                        className="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                                        placeholder="Contoh: Monas, Jakarta"
+                                        value={giantSelfieMonument}
+                                        onChange={(e) => setGiantSelfieMonument(e.target.value)}
+                                    />
+                                    {isTranslatingMonument && <p className="text-xs text-amber-400 animate-pulse">Menerjemahkan setelah 5 detik jeda...</p>}
+                                 </div>
+                            )}
+
                              {selectedStyle === '__ACTION_FIGURE_CUSTOM__' && (
                                  <div className="mt-4 flex flex-col gap-3 p-3 bg-gray-900/50 rounded-md border border-gray-700">
                                      <label htmlFor="actionFigureOutfit" className="block text-xs font-medium text-gray-400">Deskripsikan kostum figur aksi (dalam Bahasa Indonesia):</label>
@@ -744,7 +905,10 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
                                         className="w-full bg-gray-800 border border-gray-600 rounded-md p-3 text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
                                         placeholder="Contoh: Seorang ksatria cyberpunk dengan baju zirah neon..."
                                         value={customPrompt}
-                                        onChange={(e) => setCustomPrompt(e.target.value)}
+                                        onChange={(e) => {
+                                            setCustomPrompt(e.target.value);
+                                            if (improvedOptions?.key === 'customPrompt') setImprovedOptions(null);
+                                        }}
                                     />
                                     <div className='flex flex-col sm:flex-row gap-3'>
                                         <button onClick={handleImprovePrompt} disabled={isImprovingPrompt || !customPrompt.trim()} className="flex-1 text-sm bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 disabled:cursor-not-allowed text-white font-semibold py-2 px-3 rounded-md transition flex items-center justify-center gap-2">
@@ -756,6 +920,7 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
                                             <label htmlFor="translate" className="ml-2 text-sm text-gray-300">Terjemahkan</label>
                                         </div>
                                     </div>
+                                    {improvedOptions?.key === 'customPrompt' && <ImprovedOptionsDisplay {...improvedOptions} />}
                                 </div>
                             )}
 
@@ -793,6 +958,96 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
                             {activeCustomStyle && (
                                 <div className="mt-4 p-4 bg-gray-900/50 rounded-lg border border-gray-700 flex flex-col gap-4">
                                      <p className="text-xs text-center text-amber-300 bg-amber-900/30 p-2 rounded-md border border-amber-800">{CUSTOM_STYLES.find(s => s.id === activeCustomStyle)?.note}</p>
+                                    {activeCustomStyle === 'underwearLingerie' && (
+                                        <div className="flex flex-col gap-4">
+                                            <h4 className="text-base font-semibold text-gray-200 mb-0">Kustomisasi Model</h4>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label htmlFor="modelEthnicity" className="block text-xs font-medium text-gray-400 mb-1">Etnis</label>
+                                                    <select
+                                                        id="modelEthnicity"
+                                                        className="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm text-gray-200 focus:ring-2 focus:ring-indigo-500"
+                                                        value={underwearLingerieOptions.ethnicity}
+                                                        onChange={(e) => setUnderwearLingerieOptions(prev => ({ ...prev, ethnicity: e.target.value as UnderwearLingerieOptions['ethnicity'] }))}
+                                                    >
+                                                        <option value="asia">Asia</option>
+                                                        <option value="indonesia">Indonesia</option>
+                                                        <option value="kaukasia">Kaukasia</option>
+                                                        <option value="latina">Latina</option>
+                                                        <option value="kulit hitam">Kulit Hitam</option>
+                                                        <option value="timur tengah">Timur Tengah</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label htmlFor="modelBodyType" className="block text-xs font-medium text-gray-400 mb-1">Tipe Badan</label>
+                                                    <select
+                                                        id="modelBodyType"
+                                                        className="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm text-gray-200 focus:ring-2 focus:ring-indigo-500"
+                                                        value={underwearLingerieOptions.bodyType}
+                                                        onChange={(e) => setUnderwearLingerieOptions(prev => ({ ...prev, bodyType: e.target.value as UnderwearLingerieOptions['bodyType'] }))}
+                                                    >
+                                                        <option value="langsing">Langsing</option>
+                                                        <option value="atletis">Atletis</option>
+                                                        <option value="berisi">Berisi</option>
+                                                        <option value="melengkung">Melengkung (Curvy)</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label htmlFor="modelBustSize" className="block text-xs font-medium text-gray-400 mb-1">Ukuran Dada</label>
+                                                    <select
+                                                        id="modelBustSize"
+                                                        className="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm text-gray-200 focus:ring-2 focus:ring-indigo-500"
+                                                        value={underwearLingerieOptions.bustSize}
+                                                        onChange={(e) => setUnderwearLingerieOptions(prev => ({ ...prev, bustSize: e.target.value as UnderwearLingerieOptions['bustSize'] }))}
+                                                    >
+                                                        <option value="kecil">Kecil</option>
+                                                        <option value="sedang">Sedang</option>
+                                                        <option value="besar">Besar</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label htmlFor="modelHairColor" className="block text-xs font-medium text-gray-400 mb-1">Warna Rambut</label>
+                                                    <select
+                                                        id="modelHairColor"
+                                                        className="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm text-gray-200 focus:ring-2 focus:ring-indigo-500"
+                                                        value={underwearLingerieOptions.hairColor}
+                                                        onChange={(e) => setUnderwearLingerieOptions(prev => ({ ...prev, hairColor: e.target.value as UnderwearLingerieOptions['hairColor'] }))}
+                                                    >
+                                                        <option value="pirang">Pirang</option>
+                                                        <option value="coklat">Coklat</option>
+                                                        <option value="hitam">Hitam</option>
+                                                        <option value="merah">Merah</option>
+                                                    </select>
+                                                </div>
+                                                <div className="sm:col-span-2">
+                                                    <label htmlFor="modelSetting" className="block text-xs font-medium text-gray-400 mb-1">Latar/Setting</label>
+                                                    <select
+                                                        id="modelSetting"
+                                                        className="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm text-gray-200 focus:ring-2 focus:ring-indigo-500"
+                                                        value={underwearLingerieOptions.setting}
+                                                        onChange={(e) => setUnderwearLingerieOptions(prev => ({ ...prev, setting: e.target.value as UnderwearLingerieOptions['setting'] }))}
+                                                    >
+                                                        <option value="studio minimalis">Studio Minimalis</option>
+                                                        <option value="kamar tidur mewah">Kamar Tidur Mewah</option>
+                                                        <option value="pantai saat senja">Pantai Saat Senja</option>
+                                                    </select>
+                                                </div>
+                                                <div className="sm:col-span-2">
+                                                    <label htmlFor="modelPose" className="block text-xs font-medium text-gray-400 mb-1">Pose</label>
+                                                    <select
+                                                        id="modelPose"
+                                                        className="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm text-gray-200 focus:ring-2 focus:ring-indigo-500"
+                                                        value={underwearLingerieOptions.pose}
+                                                        onChange={(e) => setUnderwearLingerieOptions(prev => ({ ...prev, pose: e.target.value }))}
+                                                    >
+                                                        {LINGERIE_POSE_TEMPLATES.map(pose => (
+                                                            <option key={pose.label} value={pose.value}>{pose.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                     {activeCustomStyle === 'promptVideoVeo' && (
                                         <div className="flex flex-col gap-3">
                                             <label htmlFor="veoManualPrompt" className="block text-sm font-medium text-gray-300">Deskripsikan ide video Anda (dalam Bahasa Indonesia):</label>
@@ -852,7 +1107,10 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
                                                     className="w-full bg-gray-800 border border-gray-600 rounded-md p-3 text-gray-200 focus:ring-2 focus:ring-indigo-500"
                                                     placeholder="Contoh: Jadikan orang di Foto 1 sebagai seorang koki yang sedang memasak di dapur dari Foto 2."
                                                     value={semuaBisaDisiniOptions.prompt}
-                                                    onChange={(e) => setSemuaBisaDisiniOptions(p => ({ ...p, prompt: e.target.value }))}
+                                                    onChange={(e) => {
+                                                        setSemuaBisaDisiniOptions(p => ({ ...p, prompt: e.target.value }));
+                                                        if (improvedOptions?.key === 'sbd') setImprovedOptions(null);
+                                                    }}
                                                 />
                                                 <button 
                                                     onClick={handleImproveSBDPrompt} 
@@ -862,6 +1120,7 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
                                                     {isImprovingSBDPrompt ? <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> : <SparklesIcon className="w-5 h-5"/>}
                                                     {isImprovingSBDPrompt ? 'Meningkatkan...' : 'Tingkatkan dengan AI'}
                                                 </button>
+                                                 {improvedOptions?.key === 'sbd' && <ImprovedOptionsDisplay {...improvedOptions} />}
                                             </div>
                                         </div>
                                     )}
@@ -974,7 +1233,10 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
                                                         className="w-full bg-gray-800 border border-gray-600 rounded-md p-3 text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition disabled:opacity-50"
                                                         placeholder="Tulis prompt adegan Anda di sini (mis: Berpose di karpet merah)"
                                                         value={photoWithIdolOptions.manualPrompt}
-                                                        onChange={(e) => setPhotoWithIdolOptions(p => ({ ...p, manualPrompt: e.target.value }))}
+                                                        onChange={(e) => {
+                                                            setPhotoWithIdolOptions(p => ({ ...p, manualPrompt: e.target.value }));
+                                                            if (improvedOptions?.key === 'idol') setImprovedOptions(null);
+                                                        }}
                                                     />
                                                     <button 
                                                         onClick={handleImproveIdolManualPrompt} 
@@ -985,6 +1247,7 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
                                                         Tingkatkan
                                                     </button>
                                                 </div>
+                                                 {improvedOptions?.key === 'idol' && <ImprovedOptionsDisplay {...improvedOptions} />}
                                             </div>
                                              <div className="text-center text-gray-500 font-bold">ATAU</div>
                                              <div className={`border-t border-gray-700 pt-4 flex flex-col gap-4 ${photoWithIdolOptions.manualPrompt.trim() ? 'opacity-50' : ''}`}>
@@ -1154,6 +1417,22 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
             <div className="mt-auto pt-6 border-t border-gray-700 flex flex-col gap-4">
                  <div className="relative">
                     <h4 className="text-sm font-semibold text-gray-300 mb-2">Hasil Prompt Anda:</h4>
+                     {activeTab === 'kustom' && activeCustomStyle === 'promptVideoVeo' && improvedVeoPrompt && (
+                        <div className="flex gap-1 mb-2">
+                             <button 
+                                onClick={() => setSelectedVeoVersion('detailed')}
+                                className={`px-3 py-1 text-xs rounded-md ${selectedVeoVersion === 'detailed' ? 'bg-indigo-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+                            >
+                                Detail
+                            </button>
+                             <button 
+                                onClick={() => setSelectedVeoVersion('concise')}
+                                className={`px-3 py-1 text-xs rounded-md ${selectedVeoVersion === 'concise' ? 'bg-indigo-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+                            >
+                                Ringkas
+                            </button>
+                        </div>
+                    )}
                     <pre className="text-sm bg-gray-900 p-4 rounded-md text-gray-400 font-mono whitespace-pre-wrap min-h-[80px]">
                         {generatedPrompt}
                     </pre>

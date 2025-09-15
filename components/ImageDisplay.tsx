@@ -51,6 +51,7 @@ const EditSection: React.FC<{
     const [activeMenu, setActiveMenu] = useState<null | 'background' | 'pose'>(null);
     const [isFaceLockForEditEnabled, setIsFaceLockForEditEnabled] = useState<boolean>(true);
     const [isImprovingPose, setIsImprovingPose] = useState<boolean>(false);
+    const [improvedPoseOptions, setImprovedPoseOptions] = useState<{ detailed: string, concise: string } | null>(null);
 
     const handleSaveImage = useCallback(() => {
         if (!imageUrl) return;
@@ -79,12 +80,13 @@ const EditSection: React.FC<{
     const handleImprovePose = async () => {
         if (!poseInput.trim() || isImprovingPose) return;
         setIsImprovingPose(true);
+        setImprovedPoseOptions(null);
         try {
             const improved = await improvePosePrompt(poseInput);
-            setPoseInput(improved);
+            setImprovedPoseOptions(improved);
         } catch (error) {
             console.error("Gagal meningkatkan pose:", error);
-            // Di aplikasi nyata, tampilkan notifikasi error kepada pengguna
+            // In a real app, show an error notification to the user
         } finally {
             setIsImprovingPose(false);
         }
@@ -119,7 +121,10 @@ const EditSection: React.FC<{
                                     id="customPose"
                                     type="text" 
                                     value={poseInput} 
-                                    onChange={e => setPoseInput(e.target.value)} 
+                                    onChange={e => {
+                                        setPoseInput(e.target.value);
+                                        setImprovedPoseOptions(null);
+                                    }} 
                                     placeholder="mis: menari di bawah hujan" 
                                     className="w-full bg-gray-900 border border-gray-600 rounded-md p-2 pr-10 text-xs focus:ring-1 focus:ring-indigo-500" 
                                 />
@@ -144,6 +149,25 @@ const EditSection: React.FC<{
                                 Ganti Pose Kustom
                             </button>
                          </form>
+                          {improvedPoseOptions && (
+                            <div className="mt-2 p-2 bg-gray-900 border border-gray-700 rounded-md animate-fade-in">
+                                <p className="text-xs text-purple-400 mb-2 font-semibold">AI menyarankan versi ini:</p>
+                                <div className="flex flex-col gap-2">
+                                    <button 
+                                        onClick={() => { setPoseInput(improvedPoseOptions.detailed); setImprovedPoseOptions(null); }} 
+                                        className="text-xs w-full text-left bg-gray-700 hover:bg-gray-600 p-2 rounded-md transition"
+                                    >
+                                        <span className="font-bold">Detail:</span> "{improvedPoseOptions.detailed}"
+                                    </button>
+                                    <button 
+                                        onClick={() => { setPoseInput(improvedPoseOptions.concise); setImprovedPoseOptions(null); }} 
+                                        className="text-xs w-full text-left bg-gray-700 hover:bg-gray-600 p-2 rounded-md transition"
+                                    >
+                                        <span className="font-bold">Ringkas:</span> "{improvedPoseOptions.concise}"
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             );
@@ -174,7 +198,7 @@ const EditSection: React.FC<{
                     <RedoIcon className="w-4 h-4" /> Redo
                 </button>
                 <button onClick={() => handleEdit('Pertajam gambar, tingkatkan fokus dan kejernihan detail.')} disabled={isLoading} className="text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-wait p-2 rounded-md transition">Tingkatkan Ketajaman</button>
-                <button onClick={() => handleEdit('Tingkatkan warna pada gambar, buat lebih cerah dan jenuh.')} disabled={isLoading} className="text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-wait p-2 rounded-md transition">Tingkatkan Warna</button>
+                <button onClick={() => handleEdit("Secara cerdas tingkatkan warna pada gambar ini. Perkaya saturasi untuk membuat warna lebih hidup dan bersemangat (vibrant), sesuaikan kontras agar warna lebih menonjol, dan tingkatkan kecerahan secara keseluruhan tanpa menghilangkan detail bayangan. Jaga agar warna kulit tetap terlihat alami. Hasilnya harus terlihat kaya, dinamis, dan menarik secara visual.")} disabled={isLoading} className="text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-wait p-2 rounded-md transition">Tingkatkan Warna</button>
                 <button onClick={() => setActiveMenu(activeMenu === 'background' ? null : 'background')} disabled={isLoading} className={`text-sm p-2 rounded-md transition ${activeMenu === 'background' ? 'bg-indigo-600' : 'bg-gray-700 hover:bg-gray-600'}`}>Ganti Latar</button>
                 <button onClick={() => setActiveMenu(activeMenu === 'pose' ? null : 'pose')} disabled={isLoading} className={`text-sm p-2 rounded-md transition ${activeMenu === 'pose' ? 'bg-indigo-600' : 'bg-gray-700 hover:bg-gray-600'}`}>Ganti Pose</button>
                 <button onClick={() => handleEdit('Hapus latar belakang, sisakan hanya subjek utama dengan latar belakang abu-abu netral.')} disabled={isLoading} className="text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-wait p-2 rounded-md transition">Hapus Latar</button>

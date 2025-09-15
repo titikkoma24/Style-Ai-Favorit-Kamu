@@ -58,8 +58,24 @@ export const RECOMMENDED_STYLES: RecommendedStyle[] = [
     value: 'Hands in Pockets – Relaxed Authority. A hyper-realistic, cinematic editorial portrait of the person being uploaded (keep the face 100%). They stand upright in a dark, gloomy studio, surrounded by billowing smoke under dramatic lighting. Clothing: As per the uploaded reference photo. Both hands are casually tucked into their pockets, shoulders relaxed, a confident expression, and the head is slightly tilted. Make it hyper-realistic, 8k, sharp focus, detailed textures, cinematic lighting., sharp focus, high contrast, realistic'
   },
   {
-    label: 'Siluet estetik',
-    value: 'A captivating, high-contrast monochrome portrait, captured in a precise 90-degree side profile of a woman. The image is composed with a long telephoto lens (e.g., 135mm or 200mm) at a wide aperture (e.g., f/2.8) for exceptional subject isolation and buttery smooth bokeh, shot from a slightly elevated eye-level to subtly emphasize the subject\'s contemplative gaze. Dramatic, razor-sharp rim lighting meticulously sculpts the exquisite contours of her profile – from the delicate arch of her brow and the bridge of her nose, along the elegant line of her jaw, to the individual wisps of hair framing her face. This light creates a luminous halo, separating her from an abyssal, velvet-black background that completely dissolves any sense of environment, pushing the silhouette to the forefront as a powerful, almost abstract form. The aesthetic draws heavily from the dramatic chiaroscuro of classic Film Noir and the minimalist elegance of Irving Penn\'s "Small Trades" series, rendered with the fine grain, deep blacks, and brilliant highlights characteristic of pushed Kodak T-Max 100 film. The emotional mood is one of profound introspection, enigmatic strength, and a timeless, serene allure., sharp focus, high contrast, realistic'
+    label: 'Siluet Estetik: Menunduk ke Depan',
+    value: 'A captivating, high-contrast monochrome portrait of a person facing forward, their head slightly bowed in contemplation. The image is composed with a long telephoto lens at a wide aperture for exceptional subject isolation. Dramatic, razor-sharp rim lighting from behind meticulously sculpts the exquisite contours of their form – their shoulders, the line of their hair, and the gentle curve of their bowed head. This light creates a luminous halo, separating them from an abyssal, velvet-black background. The aesthetic draws heavily from the dramatic chiaroscuro of classic Film Noir. The emotional mood is one of profound introspection and quiet strength. sharp focus, high contrast, realistic'
+  },
+  {
+    label: 'Siluet Estetik: Menengadah ke Atas',
+    value: 'A captivating, high-contrast monochrome portrait of a person facing forward, their head tilted slightly upwards with a serene expression. The image is composed with a long telephoto lens at a wide aperture for exceptional subject isolation. Dramatic, razor-sharp rim lighting from behind meticulously sculpts the exquisite contours of their form – their shoulders, jawline, and the flow of their hair. This light creates a luminous halo, separating them from an abyssal, velvet-black background. The aesthetic draws heavily from the dramatic chiaroscuro of classic Film Noir. The emotional mood is one of hopeful serenity and timeless elegance. sharp focus, high contrast, realistic'
+  },
+  {
+    label: 'Siluet Estetik: Profil Samping 90°',
+    value: 'A captivating, high-contrast monochrome portrait, captured in a precise 90-degree side profile. The image is composed with a long telephoto lens at a wide aperture for exceptional subject isolation and buttery smooth bokeh. Dramatic, razor-sharp rim lighting meticulously sculpts the exquisite contours of the profile – from the brow and the bridge of the nose, along the elegant line of the jaw. This light creates a luminous halo, separating the subject from an abyssal, velvet-black background, pushing the silhouette to the forefront as a powerful form. The aesthetic draws from classic Film Noir, with an emotional mood of profound introspection and enigmatic strength. sharp focus, high contrast, realistic'
+  },
+  {
+    label: 'Siluet Estetik: Menyamping Santai',
+    value: 'A captivating, high-contrast monochrome portrait of a person standing in a relaxed three-quarter turn, body angled slightly away from the camera, with their hands casually placed in their pockets. The image is composed with a long telephoto lens at a wide aperture. Dramatic, razor-sharp rim lighting from behind meticulously sculpts the exquisite contours of their silhouette – the line of their shoulder and back, the shape of their arm, and the profile of their face as they gaze away. This light creates a luminous halo, separating them from an abyssal, velvet-black background. The aesthetic draws from classic Film Noir. The emotional mood is one of casual confidence and enigmatic allure. sharp focus, high contrast, realistic'
+  },
+  {
+    label: 'Siluet Estetik: Menoleh ke Belakang',
+    value: 'A captivating, high-contrast monochrome portrait with the person\'s back to the camera, their head turned gracefully over their shoulder to glance back. The image is composed with a long telephoto lens at a wide aperture. Dramatic, razor-sharp rim lighting meticulously sculpts the exquisite contours of their form – the elegant curve of their back, the line of their shoulder, and the sharp profile of their face as they look back. This light creates a luminous halo, separating them from an abyssal, velvet-black background. The aesthetic draws from classic Film Noir. The emotional mood is one of mysterious intrigue and dramatic tension. sharp focus, high contrast, realistic'
   },
   {
     label: 'Monokrom Luxury',
@@ -85,7 +101,7 @@ export const RECOMMENDED_STYLES: RecommendedStyle[] = [
   },
   {
     label: 'Hyper detailed',
-    value: 'Dramatically enhance this image into a hyper-detailed and ultra-realistic visual masterpiece, with unparalleled cinematic resolution. Every texture must possess microscopic definition: clearly visible fabric fibers, subtle scratches on polished metal surfaces, authentic skin pores, or intricate and profound wood grain patterns. Material surfaces must exhibit accurate characteristics, be it realistic wear and tear, rich patina, a flawless sheen reflecting light, or a tangible rough texture.\n\nReflections must be crystal clear and physically accurate, mirroring the surroundings with photorealistic precision, complete with realistic distortions on curved surfaces and profound light refraction effects.\n\nLighting must be sophisticated and multidimensional, powered by realistic Global Illumination (GI) to accentuate every volume, form, and depth. Highlights must be sharp, specular, and dynamic, while shadows must be soft yet possess definition in their deepest details, with gradient penumbra and accurate color nuances. Include volumetric light effects such as god rays, crepuscular rays, or subtle ambient haze to add atmospheric depth.\n\nThe color palette must be rich and varied, with seamless gradient transitions, striking dynamic contrast, and perfectly calibrated color accuracy. Color depth must be palpable, from deep blacks to brilliant whites, with vibrant yet natural vibrancy.\n\nComposition must be captivating, with deliberate depth of field and soft bokeh effects to guide the eye to the main focal point. Micro-details such as glistening dew drops, dust motes suspended in the air, frozen water splashes, or other minute particles must be visible, creating an immersive atmosphere and infinite detail.\n\nThe final output must possess ultra-high resolution (8K/16K), rendered with blockbuster film studio quality, highlighting every pixel with unparalleled clarity, sharpness, and authenticity, resembling a perfect macro photograph or the finest Hollywood visual effects., sharp focus, high contrast, realistic'
+    value: 'Dramatically enhance this image into a hyper-detailed and ultra-realistic visual masterpiece, with unparalleled cinematic resolution. Every texture must possess microscopic definition: clearly visible fabric fibers, subtle scratches on polished metal surfaces, authentic skin pores, or intricate and profound wood grain patterns. Material surfaces must exhibit accurate characteristics, be it realistic wear and tear, rich patina, a flawless sheen reflecting light, or a tangible rough texture.\n\nReflections must be crystal clear and physically accurate, mirroring the surroundings with photorealistic precision, complete with realistic distortions on curved surfaces and profound light refraction effects.\n\nLighting must be sophisticated and multidimensional, powered by realistic Global Illumination (GI) to accentuate every volume, form, and depth. Highlights must be sharp, specular, and dynamic, while shadows must be soft yet possess definition in their deepest details, with gradient penumbra and accurate color nuances. Include volumetric light effects such as god rays, crepuscular rays, or a subtle ambient haze to add atmospheric depth.\n\nThe color palette must be rich and varied, with seamless gradient transitions, striking dynamic contrast, and perfectly calibrated color accuracy. Color depth must be palpable, from deep blacks to brilliant whites, with vibrant yet natural vibrancy.\n\nComposition must be captivating, with deliberate depth of field and soft bokeh effects to guide the eye to the main focal point. Micro-details such as glistening dew drops, dust motes suspended in the air, frozen water splashes, or other minute particles must be visible, creating an immersive atmosphere and infinite detail.\n\nThe final output must possess ultra-high resolution (8K/16K), rendered with blockbuster film studio quality, highlighting every pixel with unparalleled clarity, sharpness, and authenticity, resembling a perfect macro photograph or the finest Hollywood visual effects., sharp focus, high contrast, realistic'
   },
   {
     label: 'sketsa',
@@ -93,7 +109,11 @@ export const RECOMMENDED_STYLES: RecommendedStyle[] = [
   },
   {
     label: 'cartoon estetik',
-    value: 'Convert the detected human subject in the attached image into a cartoon style, vibrant color fills, bold black internal line art, smooth shapes, simplified textures. Add a uniform outer white stroke of 12 px around the subject. Preserve the original photo background. Keep proportions similar to the photo. On a new top layer, draw white doodle elements around the subject’s silhouette without covering the face: small sparkles, stars, dots, swirls, motion lines, leaf sprigs.'
+    value: 'Transform the human subject detected in the attached image into a cartoon style, with a bright color fill, thick black inner line art, smooth shapes, and simplified textures. Add a uniform 12-pixel outer white stroke around the subject. Keep the background of the original photo. Maintain similar proportions to the photo. On a new top layer, draw doodle elements (matching the color of the shirt) around the subject\'s silhouette without covering the face: small sparkles, stars, dots, swirls, moving lines, and improve the doodle motif behind the photo object to fill the entire frame.'
+  },
+  {
+    label: 'Giant selfi and Monumen',
+    value: '__GIANT_SELFIE__'
   },
   {
     label: 'Action Figure Custom Outfit',
@@ -110,13 +130,26 @@ export const STYLE_CATEGORIES: StyleCategory[] = [
         id: 'baseStyle',
         name: 'Gaya Dasar',
         options: [
-            { value: 'digital art', label: 'Seni Digital' },
             { value: 'photorealistic', label: 'Fotorealistik' },
+            { value: 'digital art', label: 'Seni Digital' },
             { value: 'anime style', label: 'Gaya Anime' },
+            { value: '3D render', label: 'Render 3D' },
+            { value: 'concept art', label: 'Seni Konsep' },
             { value: 'oil painting', label: 'Lukisan Cat Minyak' },
-            { value: 'watercolor', label: 'Lukisan Cat Air' },
-            { value: 'fantasy', label: 'Fantasi' },
-            { value: 'cyberpunk', label: 'Cyberpunk' },
+            { value: 'watercolor painting', label: 'Lukisan Cat Air' },
+            { value: 'fantasy art', label: 'Seni Fantasi' },
+            { value: 'cyberpunk style', label: 'Gaya Cyberpunk' },
+            { value: 'steampunk style', label: 'Gaya Steampunk' },
+            { value: 'Art Nouveau', label: 'Art Nouveau' },
+            { value: 'sticker style', label: 'Gaya Stiker' },
+            { value: 'pixel art', label: 'Seni Piksel' },
+            { value: 'vector art', label: 'Seni Vektor' },
+            { value: 'gothic art style', label: 'Seni Gotik' },
+            { value: 'vaporwave aesthetic', label: 'Estetika Vaporwave' },
+            { value: 'impressionism', label: 'Impresionisme' },
+            { value: 'surrealism', label: 'Surealisme' },
+            { value: 'line art', label: 'Seni Garis (Line Art)' },
+            { value: 'low poly', label: 'Poli Rendah (Low Poly)' },
         ],
     },
     {
@@ -126,40 +159,81 @@ export const STYLE_CATEGORIES: StyleCategory[] = [
             { value: 'cinematic lighting', label: 'Sinematik' },
             { value: 'soft lighting', label: 'Lembut' },
             { value: 'dramatic lighting', label: 'Dramatis' },
-            { value: 'neon lighting', label: 'Neon' },
             { value: 'natural lighting', label: 'Alami' },
+            { value: 'neon lighting', label: 'Neon' },
+            { value: 'golden hour', label: 'Golden Hour' },
+            { value: 'blue hour', label: 'Blue Hour' },
+            { value: 'rim lighting', label: 'Rim Lighting' },
+            { value: 'backlighting', label: 'Backlighting' },
+            { value: 'hard studio lighting', label: 'Studio Keras' },
+            { value: 'volumetric lighting', label: 'Volumetrik' },
+            { value: 'bioluminescent glow', label: 'Sinar Bioluminesen' },
+            { value: 'caustic lighting', label: 'Kaustik (Pantulan Air)' },
+            { value: 'Rembrandt lighting', label: 'Pencahayaan Rembrandt' },
+            { value: 'underwater lighting', label: 'Bawah Air' },
         ],
     },
     {
         id: 'colorPalette',
         name: 'Palet Warna',
         options: [
-            { value: 'vibrant colors', label: 'Cerah' },
+            { value: 'vibrant colors', label: 'Cerah & Bersemangat' },
             { value: 'monochromatic', label: 'Monokromatik' },
             { value: 'pastel colors', label: 'Pastel' },
             { value: 'dark and moody', label: 'Gelap & Murung' },
             { value: 'earth tones', label: 'Warna Bumi' },
+            { value: 'neon noir palette', label: 'Neon Noir' },
+            { value: 'oceanic blues and greens', label: 'Biru & Hijau Lautan' },
+            { value: 'autumnal color scheme', label: 'Warna Musim Gugur' },
+            { value: 'synthwave palette (pinks and blues)', label: 'Synthwave (Pink & Biru)' },
+            { value: 'iridescent and holographic', label: 'Iridisen & Holografik' },
+            { value: 'sepia tone', label: 'Nada Sepia' },
+            { value: 'complementary colors', label: 'Warna Komplementer' },
+            { value: 'analogous colors', label: 'Warna Analog' },
+            { value: 'triadic color scheme', label: 'Skema Triadik' },
+            { value: 'high contrast black and white', label: 'Hitam Putih Kontras Tinggi' },
         ],
     },
     {
         id: 'composition',
         name: 'Komposisi',
         options: [
-            { value: 'wide angle shot', label: 'Sudut Lebar' },
             { value: 'close-up shot', label: 'Close-up' },
-            { value: 'dynamic angle', label: 'Sudut Dinamis' },
-            { value: "bird's eye view", label: 'Pemandangan Atas' },
+            { value: 'medium shot', label: 'Medium Shot' },
+            { value: 'full body shot', label: 'Seluruh Badan' },
+            { value: 'wide angle shot', label: 'Sudut Lebar' },
+            { value: 'extreme wide shot', label: 'Sudut Sangat Lebar' },
             { value: 'portait', label: 'Potret' },
+            { value: 'landscape', label: 'Lanskap' },
+            { value: 'dynamic angle', label: 'Sudut Dinamis' },
+            { value: 'low angle shot', label: 'Sudut Rendah' },
+            { value: 'high angle shot', label: 'Sudut Tinggi' },
+            { value: "bird's eye view", label: 'Pemandangan Atas' },
+            { value: 'rule of thirds', label: 'Aturan Sepertiga' },
+            { value: 'leading lines', label: 'Garis Pemandu' },
+            { value: 'dynamic symmetry', label: 'Simetri Dinamis' },
+            { value: 'Dutch angle', label: 'Sudut Belanda (Miring)' },
+            { value: 'fisheye lens perspective', label: 'Lensa Fisheye' },
+            { value: 'macro shot', label: 'Makro' },
+            { value: 'panorama', label: 'Panorama' },
+            { value: 'cinematic still', label: 'Potongan Film' },
+            { value: 'headshot', label: 'Headshot' },
         ],
     },
     {
         id: 'details',
         name: 'Detail',
         options: [
-            { value: 'highly detailed, 4k resolution', label: 'Sangat Detail, 4K' },
+            { value: 'highly detailed', label: 'Sangat Detail' },
+            { value: '4k resolution', label: 'Resolusi 4K' },
+            { value: '8k resolution', label: 'Resolusi 8K' },
             { value: 'intricate details', label: 'Detail Rumit' },
             { value: 'sharp focus', label: 'Fokus Tajam' },
             { value: 'minimalist', label: 'Minimalis' },
+            { value: 'heavy grain', label: 'Grain Film Tebal' },
+            { value: 'clean vector lines', label: 'Garis Vektor Bersih' },
+            { value: 'textured brushstrokes', label: 'Goresan Kuas Bertekstur' },
+            { value: 'hyperrealistic textures', label: 'Tekstur Hiper-realistis' },
         ],
     },
 ];
@@ -219,6 +293,11 @@ export const CUSTOM_STYLES: CustomStyle[] = [
         id: 'tingkatkanKualitas',
         name: 'Tingkatkan Kualitas Foto (DSLR)',
         note: 'Unggah foto untuk meningkatkan resolusi, ketajaman, warna, dan pencahayaan secara dramatis, seolah diambil dengan kamera DSLR profesional. Wajah akan 100% dipertahankan.',
+    },
+    {
+        id: 'underwearLingerie',
+        name: 'Underwear/Lingerie',
+        note: 'Unggah foto underwear atau lingerie, dan AI akan membuatkan model yang memakainya secara otomatis.',
     }
 ];
 
@@ -403,4 +482,31 @@ export const LIGHT_STYLE_TEMPLATES = [
     { label: 'Proyeksi Latar (Gobo)', value: 'light projected through a pattern (a gobo), casting interesting shapes on the background' },
     { label: 'Cahaya Rembrandt', value: 'Rembrandt lighting, with a characteristic triangle of light on the less-illuminated cheek' },
     { label: 'Cahaya Atas (Butterfly)', value: 'flattering butterfly lighting from above, creating a small shadow under the nose' },
+];
+
+export const LINGERIE_POSE_TEMPLATES = [
+    // Pose Klasik & Elegan
+    { label: 'Klasik: Berdiri, Tangan di Pinggang', value: 'A classic and elegant standing pose with hands on hips, showcasing the full body silhouette, highlighting the waist and body curves.' },
+    { label: 'Klasik: Duduk di Tepi Tempat Tidur', value: 'A relaxed yet sensual pose, sitting on the edge of a bed or chair, often with one leg bent and the other dangling.' },
+    { label: 'Klasik: Berbaring Telentang', value: 'Lying on the back with hands above the head, emphasizing the chest and abdomen, giving a relaxed and comfortable impression.' },
+    { label: 'Klasik: Berdiri Menyamping', value: 'Standing sideways while looking at the camera, showing the body profile, highlighting the curves of the back and hips.' },
+    { label: 'Klasik: Satu Kaki Ditekuk', value: 'A dynamic and slightly alluring standing pose with one leg slightly bent, emphasizing the length of the legs.' },
+    // Pose Aktif & Menggoda
+    { label: 'Aktif: Berlutut Menopang Dagu', value: 'A more intimate kneeling pose with hands supporting the chin, highlighting the neck and chest area.' },
+    { label: 'Aktif: Berjalan ke Kamera', value: 'A casual walk towards the camera, showing movement and confidence, ideal for capturing the silhouette in motion.' },
+    { label: 'Aktif: Menyandar ke Dinding', value: 'A chic pose leaning against a wall, which can be varied, often with legs crossed or hands behind the head.' },
+    { label: 'Aktif: Memutar Tubuh ke Belakang', value: 'A sensual pose, turning the body with a glance backward, showcasing the back and the curves of the rear.' },
+    { label: 'Aktif: Duduk Bersila', value: 'Sitting cross-legged with a straight back, showing simplicity and comfort, with a focus on the material and cut of the underwear.' },
+    // Pose Detail & Ekspresif
+    { label: 'Detail: Menyentuh Bahu/Leher', value: 'A subtle pose touching the shoulder or neck, drawing attention to the neck and shoulder area, often showing bra strap details.' },
+    { label: 'Detail: Memegang Tepi Pakaian', value: 'A pose that can give a shy or seductive impression, while also highlighting product details by holding the edge of the bra or underwear.' },
+    { label: 'Detail: Menopang Wajah', value: 'A more introspective pose, supporting the face with one hand, often with a soft gaze towards the camera.' },
+    { label: 'Detail: Menampilkan Punggung', value: 'A pose focusing on the design of the back of the lingerie, such as cross straps or other embellishments, by showcasing the back.' },
+    { label: 'Detail: Sedikit Membungkuk', value: 'A pose that can elegantly highlight the neckline and cleavage by slightly bending forward.' },
+    // Pose Santai & Natural
+    { label: 'Santai: Bersandar di Jendela', value: 'A casual and natural pose leaning against a window, with natural light enhancing the beauty.' },
+    { label: 'Santai: Duduk di Lantai', value: 'A comfortable and relaxed pose, sitting on the floor with the back against a sofa, suitable for showcasing loungewear or everyday underwear.' },
+    { label: 'Santai: Tangan di Saku', value: 'A casual and confident pose, standing with hands in the pockets of shorts (if worn as part of the outfit).' },
+    { label: 'Santai: Menghadap Cermin', value: 'A reflective pose facing a mirror, offering an opportunity to show the pose from a different angle.' },
+    { label: 'Santai: Bergulung di Selimut', value: 'A very cozy and intimate pose, curled up on a blanket, ideal for very soft lingerie or pajamas.' }
 ];
