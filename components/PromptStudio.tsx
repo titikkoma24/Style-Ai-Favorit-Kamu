@@ -22,6 +22,8 @@ interface PromptStudioProps {
         underwearLingerieOptions?: UnderwearLingerieOptions;
     }) => void;
     isLoading: boolean;
+    isRateLimited: boolean;
+    cooldown: number;
 }
 
 const CopyIcon: React.FC<{className?: string}> = ({className}) => (
@@ -75,7 +77,7 @@ const ImprovedOptionsDisplay: React.FC<{
 };
 
 
-const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) => {
+const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading, isRateLimited, cooldown }) => {
     const [mainSubject, setMainSubject] = useState<string>('Seekor kucing astronot yang agung duduk di atas bulan, memandangi galaksi nebula');
     const [translatedMainSubject, setTranslatedMainSubject] = useState<string>('');
     const [isTranslatingSubject, setIsTranslatingSubject] = useState<boolean>(false);
@@ -1447,8 +1449,8 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
 
                 <button
                     onClick={handleGenerateClick}
-                    disabled={isLoading || (activeTab === 'kustom' && activeCustomStyle === 'promptVideoVeo')}
-                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-wait text-white font-bold py-3 px-4 rounded-md transition-all duration-200 flex items-center justify-center gap-2"
+                    disabled={isLoading || isRateLimited || (activeTab === 'kustom' && activeCustomStyle === 'promptVideoVeo')}
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-md transition-all duration-200 flex items-center justify-center gap-2"
                 >
                     {isLoading ? (
                         <>
@@ -1458,6 +1460,8 @@ const PromptStudio: React.FC<PromptStudioProps> = ({ onGenerate, isLoading }) =>
                             </svg>
                             <span>{loadingText}</span>
                         </>
+                    ) : isRateLimited ? (
+                        <span>Batas tercapai. Coba lagi dalam {cooldown}d</span>
                     ) : (
                         <span>{generateButtonText}</span>
                     )}

@@ -33,6 +33,9 @@ const App: React.FC = () => {
     const [fashionAnalysisSummary, setFashionAnalysisSummary] = useState<string | null>(null);
     const [history, setHistory] = useState<ImageFile[]>([]);
     const [currentIndex, setCurrentIndex] = useState<number>(-1);
+    const [isRateLimited, setIsRateLimited] = useState<boolean>(false);
+    const [cooldown, setCooldown] = useState<number>(0);
+
 
     const handleLock = useCallback(() => {
         localStorage.removeItem('accessType');
@@ -95,6 +98,23 @@ const App: React.FC = () => {
         };
     }, [isUnlocked, handleLock]);
 
+    useEffect(() => {
+        if (!isRateLimited || cooldown <= 0) return;
+
+        const timer = setInterval(() => {
+            setCooldown(prev => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    setIsRateLimited(false);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [isRateLimited]);
+
     const handleUnlock = (pin: string): boolean => {
         if (pin === 'sudutlain') {
             localStorage.setItem('accessType', 'timed');
@@ -117,6 +137,20 @@ const App: React.FC = () => {
         setHistory(newHistory);
         setCurrentIndex(newHistory.length - 1);
         setGeneratedImage(newImage);
+    };
+
+    const handleApiError = (err: unknown) => {
+        const errorMessage = err instanceof Error ? err.message : 'Gagal memproses permintaan. Silakan coba lagi.';
+        if (errorMessage.includes("Batas penggunaan API telah tercapai")) {
+            setError(errorMessage + " Silakan tunggu cooldown berakhir.");
+            if (!isRateLimited) {
+                setIsRateLimited(true);
+                setCooldown(60);
+            }
+        } else {
+            setError(errorMessage);
+        }
+        console.error(err);
     };
 
     const handleGenerate = useCallback(async (options: GenerateOptions) => {
@@ -273,13 +307,11 @@ Output akhir harus berupa gambar yang sama persis, tetapi ditingkatkan ke standa
             updateHistory(cleanImageFile);
 
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Gagal memproses permintaan. Silakan coba lagi.';
-            setError(errorMessage);
-            console.error(err);
+            handleApiError(err);
         } finally {
             setIsLoading(false);
         }
-    }, [history, currentIndex]);
+    }, [history, currentIndex, isRateLimited]);
 
     const handleEditImage = useCallback(async (editPrompt: string, useFaceLock: boolean) => {
         if (currentIndex < 0) {
@@ -305,13 +337,11 @@ Output akhir harus berupa gambar yang sama persis, tetapi ditingkatkan ke standa
             updateHistory(cleanImageFile);
 
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Gagal mengedit gambar. Silakan coba lagi.';
-            setError(errorMessage);
-            console.error(err);
+            handleApiError(err);
         } finally {
             setIsLoading(false);
         }
-    }, [history, currentIndex]);
+    }, [history, currentIndex, isRateLimited]);
 
     const handleApplyFashionToFace = useCallback(async (faceImage: ImageFile, fashionPrompt: string) => {
         if (!faceImage || !fashionPrompt) {
@@ -341,19 +371,19 @@ Output akhir harus berupa gambar yang sama persis, tetapi ditingkatkan ke standa
             updateHistory(cleanImageFile);
 
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Gagal menerapkan outfit. Silakan coba lagi.';
-            setError(errorMessage);
-            console.error(err);
+            handleApiError(err);
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [isRateLimited]);
 
     const handleUndo = useCallback(() => {
         const newIndex = Math.max(0, currentIndex - 1);
         setCurrentIndex(newIndex);
         setGeneratedImage(history[newIndex]);
     }, [currentIndex, history]);
+
+
 
     const handleRedo = useCallback(() => {
         const newIndex = Math.min(history.length - 1, currentIndex + 1);
@@ -373,6 +403,8 @@ Output akhir harus berupa gambar yang sama persis, tetapi ditingkatkan ke standa
                     <PromptStudio 
                         onGenerate={handleGenerate}
                         isLoading={isLoading}
+                        isRateLimited={isRateLimited}
+                        cooldown={cooldown}
                     />
                     <ImageDisplay 
                         imageUrl={generatedImage ? generatedImage.data : null} 
@@ -386,6 +418,8 @@ Output akhir harus berupa gambar yang sama persis, tetapi ditingkatkan ke standa
                         onRedo={handleRedo}
                         canUndo={currentIndex > 0}
                         canRedo={currentIndex < history.length - 1}
+                        isRateLimited={isRateLimited}
+                        cooldown={cooldown}
                     />
                 </div>
             </main>

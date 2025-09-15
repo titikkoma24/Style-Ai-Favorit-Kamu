@@ -17,6 +17,8 @@ interface ImageDisplayProps {
     onRedo: () => void;
     canUndo: boolean;
     canRedo: boolean;
+    isRateLimited: boolean;
+    cooldown: number;
 }
 
 const SparklesIcon: React.FC<{className?: string}> = ({className}) => (
@@ -41,11 +43,13 @@ const EditSection: React.FC<{
     onEdit: (prompt: string, useFaceLock: boolean) => void;
     imageUrl: string;
     isLoading: boolean;
+    isRateLimited: boolean;
+    cooldown: number;
     onUndo: () => void;
     onRedo: () => void;
     canUndo: boolean;
     canRedo: boolean;
-}> = ({ onEdit, imageUrl, isLoading, onUndo, onRedo, canUndo, canRedo }) => {
+}> = ({ onEdit, imageUrl, isLoading, isRateLimited, cooldown, onUndo, onRedo, canUndo, canRedo }) => {
     const [bgInput, setBgInput] = useState('');
     const [poseInput, setPoseInput] = useState('');
     const [activeMenu, setActiveMenu] = useState<null | 'background' | 'pose'>(null);
@@ -177,6 +181,12 @@ const EditSection: React.FC<{
 
     return (
         <div className="w-full mt-4 p-2 bg-gray-900/50 rounded-lg border border-gray-700">
+            {isRateLimited && (
+                <div className="text-center p-2 mb-3 bg-red-900/50 border border-red-700 rounded-md">
+                    <p className="text-amber-400 font-semibold text-sm">Batas penggunaan tercapai.</p>
+                    <p className="text-gray-300 text-xs">Silakan coba lagi dalam {cooldown} detik.</p>
+                </div>
+            )}
              <div className="flex items-center p-2 mb-3 border-b border-gray-700">
                 <input 
                     type="checkbox" 
@@ -191,17 +201,17 @@ const EditSection: React.FC<{
                 <p className="ml-auto text-xs text-gray-400 hidden sm:block">Gunakan untuk menjaga wajah saat mengganti pose atau gaya.</p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button onClick={onUndo} disabled={isLoading || !canUndo} className="flex items-center justify-center gap-2 text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-wait p-2 rounded-md transition">
+                <button onClick={onUndo} disabled={isLoading || isRateLimited || !canUndo} className="flex items-center justify-center gap-2 text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed p-2 rounded-md transition">
                     <UndoIcon className="w-4 h-4" /> Undo
                 </button>
-                <button onClick={onRedo} disabled={isLoading || !canRedo} className="flex items-center justify-center gap-2 text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-wait p-2 rounded-md transition">
+                <button onClick={onRedo} disabled={isLoading || isRateLimited || !canRedo} className="flex items-center justify-center gap-2 text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed p-2 rounded-md transition">
                     <RedoIcon className="w-4 h-4" /> Redo
                 </button>
-                <button onClick={() => handleEdit('Pertajam gambar, tingkatkan fokus dan kejernihan detail.')} disabled={isLoading} className="text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-wait p-2 rounded-md transition">Tingkatkan Ketajaman</button>
-                <button onClick={() => handleEdit("Secara cerdas tingkatkan warna pada gambar ini. Perkaya saturasi untuk membuat warna lebih hidup dan bersemangat (vibrant), sesuaikan kontras agar warna lebih menonjol, dan tingkatkan kecerahan secara keseluruhan tanpa menghilangkan detail bayangan. Jaga agar warna kulit tetap terlihat alami. Hasilnya harus terlihat kaya, dinamis, dan menarik secara visual.")} disabled={isLoading} className="text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-wait p-2 rounded-md transition">Tingkatkan Warna</button>
-                <button onClick={() => setActiveMenu(activeMenu === 'background' ? null : 'background')} disabled={isLoading} className={`text-sm p-2 rounded-md transition ${activeMenu === 'background' ? 'bg-indigo-600' : 'bg-gray-700 hover:bg-gray-600'}`}>Ganti Latar</button>
-                <button onClick={() => setActiveMenu(activeMenu === 'pose' ? null : 'pose')} disabled={isLoading} className={`text-sm p-2 rounded-md transition ${activeMenu === 'pose' ? 'bg-indigo-600' : 'bg-gray-700 hover:bg-gray-600'}`}>Ganti Pose</button>
-                <button onClick={() => handleEdit('Hapus latar belakang, sisakan hanya subjek utama dengan latar belakang abu-abu netral.')} disabled={isLoading} className="text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-wait p-2 rounded-md transition">Hapus Latar</button>
+                <button onClick={() => handleEdit('Pertajam gambar, tingkatkan fokus dan kejernihan detail.')} disabled={isLoading || isRateLimited} className="text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed p-2 rounded-md transition">Tingkatkan Ketajaman</button>
+                <button onClick={() => handleEdit("Secara cerdas tingkatkan warna pada gambar ini. Perkaya saturasi untuk membuat warna lebih hidup dan bersemangat (vibrant), sesuaikan kontras agar warna lebih menonjol, dan tingkatkan kecerahan secara keseluruhan tanpa menghilangkan detail bayangan. Jaga agar warna kulit tetap terlihat alami. Hasilnya harus terlihat kaya, dinamis, dan menarik secara visual.")} disabled={isLoading || isRateLimited} className="text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed p-2 rounded-md transition">Tingkatkan Warna</button>
+                <button onClick={() => setActiveMenu(activeMenu === 'background' ? null : 'background')} disabled={isLoading || isRateLimited} className={`text-sm p-2 rounded-md transition ${activeMenu === 'background' ? 'bg-indigo-600' : 'bg-gray-700 hover:bg-gray-600'} disabled:opacity-50 disabled:cursor-not-allowed`}>Ganti Latar</button>
+                <button onClick={() => setActiveMenu(activeMenu === 'pose' ? null : 'pose')} disabled={isLoading || isRateLimited} className={`text-sm p-2 rounded-md transition ${activeMenu === 'pose' ? 'bg-indigo-600' : 'bg-gray-700 hover:bg-gray-600'} disabled:opacity-50 disabled:cursor-not-allowed`}>Ganti Pose</button>
+                <button onClick={() => handleEdit('Hapus latar belakang, sisakan hanya subjek utama dengan latar belakang abu-abu netral.')} disabled={isLoading || isRateLimited} className="text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed p-2 rounded-md transition">Hapus Latar</button>
                 <button onClick={handleSaveImage} className="text-sm bg-green-600 hover:bg-green-700 p-2 rounded-md transition">Simpan</button>
             </div>
             {renderMenu()}
@@ -221,7 +231,7 @@ const CheckIcon: React.FC<{className?: string}> = ({className}) => (
   </svg>
 );
 
-const ImageDisplay: React.FC<ImageDisplayProps> = ({ imageUrl, isLoading, error, onEdit, onUndo, onRedo, canUndo, canRedo, analysisResult, analysisSummary, onApplyFashion }) => {
+const ImageDisplay: React.FC<ImageDisplayProps> = ({ imageUrl, isLoading, error, onEdit, onUndo, onRedo, canUndo, canRedo, analysisResult, analysisSummary, onApplyFashion, isRateLimited, cooldown }) => {
     const [isCopied, setIsCopied] = useState(false);
     const [isSummaryCopied, setIsSummaryCopied] = useState(false);
     const [faceForFashion, setFaceForFashion] = useState<ImageFile | null>(null);
@@ -331,8 +341,8 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ imageUrl, isLoading, error,
                                 onApplyFashion(faceForFashion, analysisSummary);
                             }
                         }}
-                        disabled={!faceForFashion || isLoading}
-                        className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-800 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-md transition-all duration-200 flex items-center justify-center gap-2"
+                        disabled={!faceForFashion || isLoading || isRateLimited}
+                        className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-md transition-all duration-200 flex items-center justify-center gap-2"
                     >
                         {isLoading ? (
                             <>
@@ -342,6 +352,8 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ imageUrl, isLoading, error,
                                 </svg>
                                 <span>Menerapkan Outfit...</span>
                             </>
+                        ) : isRateLimited ? (
+                           <span>Batas tercapai. Coba lagi dalam {cooldown}d</span>
                         ) : (
                             <span>Buat Gambar dengan Outfit Ini</span>
                         )}
@@ -353,6 +365,8 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ imageUrl, isLoading, error,
                     onEdit={onEdit} 
                     imageUrl={imageUrl} 
                     isLoading={isLoading} 
+                    isRateLimited={isRateLimited}
+                    cooldown={cooldown}
                     onUndo={onUndo}
                     onRedo={onRedo}
                     canUndo={canUndo}
